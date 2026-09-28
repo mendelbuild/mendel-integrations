@@ -1,0 +1,34 @@
+{
+  "tool": {
+    "slug": "plausible",
+    "name": "Plausible",
+    "homepage": "https://plausible.io",
+    "categories": ["know what visitors do"]
+  },
+  "version": "0.1.0",
+  "contract": "1",
+  "image": "mendel-tool-plausible:dev",
+  "command": ["/plausible"],
+  "spec_source": "https://plausible.io/docs/stats-api",
+  "connection": {
+    "account": {
+      "label": "Site domain",
+      "help": "As Plausible names the site, e.g. pong.example.com."
+    },
+    "credentials": [{
+      "name": "PLAUSIBLE_API_KEY",
+      "label": "Stats API key",
+      "help": "Account settings, API keys: a Stats API key for the site's team."
+    }],
+    "endpoint": {
+      "label": "Endpoint (self-hosted only)",
+      "help": "Leave empty for plausible.io.",
+      "placeholder": "https://analytics.example.com"
+    }
+  },
+  "claims": {
+    "probe": "supported",
+    "read_series": "partial",
+    "read_total": "supported"
+  }
+}
