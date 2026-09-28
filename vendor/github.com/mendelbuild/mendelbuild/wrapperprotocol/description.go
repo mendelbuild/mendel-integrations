@@ -72,6 +72,12 @@ type Field struct {
 	Label       string `json:"label"`
 	Help        string `json:"help,omitempty"`
 	Placeholder string `json:"placeholder,omitempty"`
+	// Public marks a credential that is an identifier rather than a secret:
+	// one the protocol itself puts where people can see it, as OAuth puts a
+	// client id in the URL a person opens. Everything else is secret, which
+	// is the default. Mendel holds a public credential with the rest; what
+	// changes is that finding it in a wrapper's output is not a leak.
+	Public bool `json:"public,omitempty"`
 }
 
 var (

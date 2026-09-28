@@ -18,7 +18,7 @@ was seen, what it means for the contract, and what, if anything, was done.
 | Local venue for Plausible (`venues/plausible-ce/`) | Built; 36 of 36 checks pass against the real thing |
 | Contract 2-draft (`wrapperprotocol/draft.go` in Mendel) | Built: `authorize` with steps, a secret `credentials` field, the action surface's and search's fields |
 | Harness for the draft | Built: authorize, a publish-to-retract lifecycle, boundaries, a credential-leak check; 19 mutants across two fakes |
-| Mastodon wrapper (publisher, OAuth) | Built and tested against a fake instance; probes mastodon.social; waiting on a person to authorize the venue account |
+| Mastodon wrapper (publisher, OAuth) | 27 of 27 checks pass live against @mdl_test on mastodon.social (0.1.1); two warnings: `complete` needs a person, and `revoke` is run only when asked |
 | Tavily wrapper (search) | Next |
 | Generation test | Last |
 
@@ -110,3 +110,15 @@ The manifest carries each kind's shape (refined per instance: 475 characters
 beside a link on mastodon.social) and the rate limits in its entitlements, so
 both verbs are declined with that reason. Worth removing from the contract
 rather than having every wrapper decline them.
+
+**11. Credentials mix secrets with identifiers.** The first live Mastodon run
+passed every check that posts -- publish, a repeat under the same key answered
+as the same post, read-back field for field, counts, retract twice, and the
+gone states -- and failed the leak check: the client id was in the authorize
+URL. That is OAuth working as designed (the person's browser carries the
+client id to the instance), and yet Mastodon's own documentation says to treat
+the client id as a password, and the draft held every credential to one rule.
+*Done:* a credential in `wrapper.json` can be marked `public`, an identifier
+the protocol shows; secret stays the default, Mendel holds both, and the leak
+check looks only for the secret ones. The harness caught this on real data in
+its first live run of a publisher, which is the case for having it.

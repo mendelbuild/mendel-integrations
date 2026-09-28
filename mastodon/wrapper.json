@@ -5,7 +5,7 @@
     "homepage": "https://joinmastodon.org",
     "categories": ["reach people where they already are"]
   },
-  "version": "0.1.0",
+  "version": "0.1.1",
   "contract": "2-draft",
   "image": "mendel-tool-mastodon:dev",
   "command": ["/mastodon"],
@@ -18,9 +18,9 @@
     },
     "authorize": true,
     "credentials": [
-      {"name": "MASTODON_CLIENT_ID", "label": "Client id, registered on the instance by authorize"},
+      {"name": "MASTODON_CLIENT_ID", "label": "Client id, registered on the instance by authorize", "public": true},
       {"name": "MASTODON_CLIENT_SECRET", "label": "Client secret, registered on the instance by authorize"},
-      {"name": "MASTODON_REDIRECT_URI", "label": "The redirect the client was registered with"},
+      {"name": "MASTODON_REDIRECT_URI", "label": "The redirect the client was registered with", "public": true},
       {"name": "MASTODON_ACCESS_TOKEN", "label": "Access token, granted by the account holder"}
     ]
   },

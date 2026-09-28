@@ -23,7 +23,7 @@ import (
 )
 
 // wrapperVersion is this wrapper's own version, recorded as its provenance.
-const wrapperVersion = "0.1.0"
+const wrapperVersion = "0.1.1"
 
 // runTimeout bounds one run: a handful of HTTP calls.
 const runTimeout = 45 * time.Second

@@ -88,7 +88,7 @@ func (p *publisher) answer(conn wp.Connection, c wp.VerbCall) wp.VerbResult {
 	case wp.VerbAuthorize:
 		switch c.Step {
 		case wp.AuthorizeBegin:
-			r.AuthorizeURL = "https://pub.example/oauth?state=" + c.State
+			r.AuthorizeURL = "https://pub.example/oauth?client_id=" + conn.Credentials["PUB_CLIENT"] + "&state=" + c.State
 			if p.stateless {
 				r.AuthorizeURL = "https://pub.example/oauth"
 			}
@@ -165,8 +165,10 @@ func runPublisher(p *publisher) Report {
 		Connection: wp.ConnectionSpec{Account: &wp.Field{Label: "Account"}, Authorize: true,
 			Credentials: []wp.Field{{Name: "PUB_TOKEN", Label: "Token"}}},
 		Claims: map[string]string{"authorize": "supported", "publish": "supported", "retract": "supported"}}
+	d.Connection.Credentials = append(d.Connection.Credentials, wp.Field{Name: "PUB_CLIENT", Label: "Client", Public: true})
 	return Run(context.Background(), Target{Description: d, Run: p.run,
-		Connection: wp.Connection{AccountID: "pub.example", Credentials: map[string]string{"PUB_TOKEN": "pub-token-SECRET"}}}, now)
+		Connection: wp.Connection{AccountID: "pub.example", Credentials: map[string]string{
+			"PUB_TOKEN": "pub-token-SECRET", "PUB_CLIENT": "pub-client-ID"}}}, now)
 }
 
 func TestAPublisherThatKeepsTheDraftPassesAndLeavesNothingBehind(t *testing.T) {

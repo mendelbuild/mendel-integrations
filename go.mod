@@ -7,4 +7,4 @@ go 1.26.1
 // repository. Doc 35 §19 (2026-09-28) says the contract becomes a small
 // public module of its own once the spike has settled it.
 
-require github.com/mendelbuild/mendelbuild v0.0.0-20260928223656-8307a1368037
+require github.com/mendelbuild/mendelbuild v0.0.0-20260928225108-3604b868aaf6

@@ -441,9 +441,15 @@ func (s *suite) readMetrics(ctx context.Context, m *wp.CapabilityManifest, ref s
 // field: not on stderr, not in an error, not in any other field.
 func (s *suite) credentialsStayPut() {
 	c := Check{Name: "no credential appears outside the credentials field, on either stream"}
+	public := map[string]bool{}
+	for _, f := range s.t.Description.Connection.Credentials {
+		public[f.Name] = f.Public
+	}
 	var values []string
-	for _, v := range s.t.Connection.Credentials {
-		if len(v) >= 8 { // short values would match by accident
+	for name, v := range s.t.Connection.Credentials {
+		// A public credential is an identifier the protocol shows (a client
+		// id in an authorize URL); short values would match by accident.
+		if !public[name] && len(v) >= 8 {
 			values = append(values, v)
 		}
 	}
