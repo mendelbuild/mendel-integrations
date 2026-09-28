@@ -59,9 +59,14 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - id: existing
         name: Is this version already published?
+        # Authenticated, so a version already pushed to a package that is
+        # still private is found and never rebuilt. The digest is the sha256
+        # of the manifest's raw bytes: `--format` is ignored by some buildx
+        # versions, and the raw manifest is what the digest names anyway.
         run: |
           IMAGE="ghcr.io/mendelbuild/${{ steps.describe.outputs.slug }}:${{ steps.describe.outputs.version }}"
-          if DIGEST=$(docker buildx imagetools inspect "$IMAGE" --format '{{.Manifest.Digest}}' 2>/dev/null); then
+          if RAW=$(docker buildx imagetools inspect --raw "$IMAGE" 2>/dev/null); then
+            DIGEST="sha256:$(printf '%s' "$RAW" | sha256sum | cut -d' ' -f1)"
             echo "published=true" >> "$GITHUB_OUTPUT"
             echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
           else
