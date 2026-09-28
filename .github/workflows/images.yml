@@ -69,7 +69,7 @@ jobs:
         env:
           BEFORE: ${{ github.event.before }}
         run: |
-          all=$(ls -d */ | tr -d / | while read -r d; do [ -f "$d/wrapper.json" ] && echo "$d"; done)
+          all=$(for f in */wrapper.json; do dirname "$f"; done)
           if [ "${{ github.event_name }}" != "push" ] || [ -z "$BEFORE" ] ||
              ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null ||
              git diff --name-only "$BEFORE" HEAD | grep -qE '^(vendor/|go\.mod$|go\.sum$|\.github/workflows/images\.yml$)'; then
