@@ -63,8 +63,8 @@ From the repository root. The build compiles natively and cross-compiles to
 `linux/amd64`; nothing is compiled under emulation. The tag is a label: Mendel
 runs the image only once a Mendel admin has registered it pinned by digest (see
 `../README.md`, "Registering, reviewing, retiring"). To run in a project's
-cluster it is published to `ghcr.io/mendelbuild/plausible:0.1.0` by this
-repository's workflow on push to `main`, and registered by the digest the
+cluster it is published to `ghcr.io/mendelbuild/plausible:0.1.0-<commit>` by
+this repository's workflow on push to `main`, and registered by the digest the
 workflow prints; a Mendel admin's review against a venue site promotes it to
 every project:
 

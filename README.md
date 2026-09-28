@@ -203,8 +203,8 @@ before every read:
    cluster the pin must be a **registry digest**, `name@sha256:<64 hex>`,
    **on a public registry**: a project's cluster can pull from its own
    registry and from a public one, and nothing else. This repository's
-   workflow publishes every wrapper to `ghcr.io/mendelbuild/<slug>:<version>`
-   on push to `main`, and prints the digest to register. A local
+   workflow publishes each changed wrapper on push to `main` (see
+   "Publishing") and prints the digest to register. A local
    image's id (`sha256:<64 hex>`, from `docker image inspect --format
    '{{.Id}}'`) is still accepted, for a Mendel admin's own verification, and
    the condition says why a project cannot run it. Retiring stops a version
@@ -231,8 +231,8 @@ Which version runs, of those pinned and not retired: one a cluster can pull
 before a local id, a reviewed one before an unreviewed one, then the newest.
 
 ```bash
-# Merged to main, the workflow publishes ghcr.io/mendelbuild/acme-analytics:1.0
-# and prints its digest in the run's summary.
+# Merged to main at commit 8cf9e5f0a1b2, the workflow publishes
+# ghcr.io/mendelbuild/acme-analytics:1.0-8cf9e5f0a1b2 and prints its digest.
 mendel-tool tools register -file wrapper.json \
   -image ghcr.io/mendelbuild/acme-analytics@sha256:...
 ACME_ANALYTICS_KEY=... mendel-tool tools verify acme-analytics 1.0 -account venue.example
@@ -296,8 +296,40 @@ tool is registered.
 6. A `wrapper.json`, and a test that it agrees with what the wrapper answers
    and that its `command` is the Dockerfile's `ENTRYPOINT`, as `plausible/`
    has.
-7. Merge to `main`. The workflow publishes the image to
-   `ghcr.io/mendelbuild/<slug>:<version>` and prints the digest to register;
-   a version's tag is never rebuilt, so a changed wrapper is a new version.
-   The package must be public, which is a one-time setting on GitHub after
-   the first push, or no project's cluster can pull it.
+7. Name the wrapper's directory for its slug, and merge to `main`. See
+   "Publishing" for what happens next.
+
+## Publishing
+
+On every push to `main`, `.github/workflows/images.yml` builds each wrapper
+whose directory changed (all of them when the vendored protocol, `go.mod` or
+the workflow changed) and publishes it as
+
+```
+ghcr.io/mendelbuild/<directory>:<version>-<commit>
+```
+
+then prints the `mendel-tool tools register` line with the digest in the run's
+summary. Nothing checks for collisions, because none can happen: a directory
+must be named for the slug its `wrapper.json` declares (the workflow fails
+otherwise), so two wrappers cannot share a package; and a commit is built once,
+so a tag never moves. A tag is only a label for finding a digest. What Mendel
+runs is the digest, and each installation's registry refuses a second digest
+for a version it already holds, so a wrapper changed without a new `version`
+publishes fine and is refused at registration, saying why.
+
+Three rules keep the shared pool trustworthy:
+
+- **The workflow is the only writer** of a wrapper's package. Never push to
+  one by hand: a tag on ghcr.io can be pushed over by anyone with write
+  access, so this rule is what keeps it naming one image. (The one other
+  writer under `ghcr.io/mendelbuild` is Mendel's own `deploy/gke-deploy.sh`,
+  which publishes `mendel-wrapper-shim` tagged by Mendel's commit.)
+- **Nothing published is ever deleted.** Staging and production are separate
+  Mendel installations that register the same digests; an image that looks
+  unused from one may be what the other runs. Promotion from staging to
+  production is registering the same digest, so production runs the bytes
+  staging tested.
+- **A new package is private until someone makes it public**, once, in its
+  settings on GitHub (Danger Zone, Change visibility). A private package can
+  be registered and cannot be pulled by any project's cluster.

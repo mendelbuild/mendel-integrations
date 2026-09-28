@@ -1,11 +1,24 @@
-# Publishes every wrapper's image to ghcr.io/mendelbuild/<slug>:<version>.
+# Publishes each changed wrapper's image to
+# ghcr.io/mendelbuild/<directory>:<version>-<commit>.
 #
-# A wrapper is a directory with a wrapper.json and a Dockerfile. Its image is
-# public, so any project's cluster can pull it, and Mendel registers it by
-# the digest this prints (mendel-tool tools register -image
-# ghcr.io/mendelbuild/<slug>@sha256:...). A version's tag is built once and
-# never rebuilt: Mendel pins one digest per version, so a changed wrapper is
-# a new version in its wrapper.json.
+# Nothing here checks for a collision, because none can happen:
+#
+#   - The package is the wrapper's directory, and a directory must be named
+#     for the slug its wrapper.json declares. Two wrappers cannot share a
+#     directory, so they cannot share a slug or a package.
+#   - The tag is the wrapper's version and the commit it was built from. A
+#     commit is never built twice, so a tag never moves.
+#
+# Tags are labels for finding a digest; Mendel registers the digest this
+# prints (mendel-tool tools register -image ghcr.io/mendelbuild/<slug>@sha256:...),
+# and each installation's registry refuses a second digest for a version it
+# already holds. So a wrapper rebuilt at a new commit without a new version in
+# its wrapper.json publishes fine and is refused at registration, with the
+# sentence saying why.
+#
+# This workflow is the only writer to these packages, and nothing published is
+# ever deleted: staging and production register the same digests, so an image
+# that looks unused from one environment may be what the other runs.
 name: images
 
 on:
@@ -34,10 +47,37 @@ jobs:
       wrappers: ${{ steps.list.outputs.wrappers }}
     steps:
       - uses: actions/checkout@v4
-      - id: list
+        with:
+          fetch-depth: 0
+      - name: Every wrapper's directory is named for its slug
         run: |
-          echo "wrappers=$(find . -mindepth 2 -maxdepth 2 -name wrapper.json -exec dirname {} \; \
-            | sed 's#^\./##' | sort | jq -R -s -c 'split("\n") | map(select(length > 0))')" >> "$GITHUB_OUTPUT"
+          status=0
+          for f in */wrapper.json; do
+            dir=$(dirname "$f")
+            slug=$(jq -r .tool.slug "$f")
+            if [ "$dir" != "$slug" ]; then
+              echo "::error file=$f::$dir/wrapper.json declares slug \"$slug\"; the directory must be named $slug"
+              status=1
+            fi
+          done
+          exit $status
+      # Only what this push changed is built, so an unchanged wrapper keeps
+      # the tags it has. A change to what every wrapper builds from (the
+      # vendored protocol, go.mod, this workflow), a manual run, or a push
+      # whose parent is unknown builds them all.
+      - id: list
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          all=$(ls -d */ | tr -d / | while read -r d; do [ -f "$d/wrapper.json" ] && echo "$d"; done)
+          if [ "${{ github.event_name }}" != "push" ] || [ -z "$BEFORE" ] ||
+             ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null ||
+             git diff --name-only "$BEFORE" HEAD | grep -qE '^(vendor/|go\.mod$|go\.sum$|\.github/workflows/images\.yml$)'; then
+            changed="$all"
+          else
+            changed=$(git diff --name-only "$BEFORE" HEAD | cut -d/ -f1 | sort -u | grep -Fxf <(echo "$all") || true)
+          fi
+          echo "wrappers=$(printf '%s\n' $changed | jq -R -s -c 'split("\n") | map(select(length > 0))')" >> "$GITHUB_OUTPUT"
 
   publish:
     needs: [test, find]
@@ -50,55 +90,29 @@ jobs:
       - uses: actions/checkout@v4
       - id: describe
         run: |
-          echo "slug=$(jq -r .tool.slug '${{ matrix.wrapper }}/wrapper.json')" >> "$GITHUB_OUTPUT"
           echo "version=$(jq -r .version '${{ matrix.wrapper }}/wrapper.json')" >> "$GITHUB_OUTPUT"
+          echo "commit=$(git rev-parse --short=12 HEAD)" >> "$GITHUB_OUTPUT"
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - id: existing
-        name: Is this version already published?
-        # Authenticated, so a version already pushed to a package that is
-        # still private is found and never rebuilt. The digest is the sha256
-        # of the manifest's raw bytes: `--format` is ignored by some buildx
-        # versions, and the raw manifest is what the digest names anyway.
-        run: |
-          IMAGE="ghcr.io/mendelbuild/${{ steps.describe.outputs.slug }}:${{ steps.describe.outputs.version }}"
-          if RAW=$(docker buildx imagetools inspect --raw "$IMAGE" 2>/dev/null); then
-            DIGEST="sha256:$(printf '%s' "$RAW" | sha256sum | cut -d' ' -f1)"
-            echo "published=true" >> "$GITHUB_OUTPUT"
-            echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
-          else
-            echo "published=false" >> "$GITHUB_OUTPUT"
-          fi
       - uses: docker/setup-buildx-action@v3
-        if: steps.existing.outputs.published == 'false'
       - id: build
         uses: docker/build-push-action@v6
-        if: steps.existing.outputs.published == 'false'
         with:
           context: .
           file: ${{ matrix.wrapper }}/Dockerfile
           platforms: linux/amd64
           push: true
-          tags: |
-            ghcr.io/mendelbuild/${{ steps.describe.outputs.slug }}:${{ steps.describe.outputs.version }}
-            ghcr.io/mendelbuild/${{ steps.describe.outputs.slug }}:sha-${{ github.sha }}
+          tags: ghcr.io/mendelbuild/${{ matrix.wrapper }}:${{ steps.describe.outputs.version }}-${{ steps.describe.outputs.commit }}
       - name: Say what to register
         run: |
-          DIGEST="${{ steps.build.outputs.digest }}"
-          if [ -z "$DIGEST" ]; then
-            DIGEST="${{ steps.existing.outputs.digest }}"
-            STATE="was already published; a changed wrapper is a new version"
-          else
-            STATE="published"
-          fi
           {
-            echo "### ${{ steps.describe.outputs.slug }} ${{ steps.describe.outputs.version }}: $STATE"
+            echo "### ${{ matrix.wrapper }} ${{ steps.describe.outputs.version }} (built at ${{ steps.describe.outputs.commit }})"
             echo
             echo '```'
             echo "mendel-tool tools register -file ${{ matrix.wrapper }}/wrapper.json \\"
-            echo "  -image ghcr.io/mendelbuild/${{ steps.describe.outputs.slug }}@$DIGEST"
+            echo "  -image ghcr.io/mendelbuild/${{ matrix.wrapper }}@${{ steps.build.outputs.digest }}"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
