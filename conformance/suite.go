@@ -25,6 +25,7 @@ package conformance
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
@@ -33,14 +34,18 @@ import (
 	wp "github.com/mendelbuild/mendelbuild/wrapperprotocol"
 )
 
-// Runner runs one request against the wrapper under test.
-type Runner func(ctx context.Context, req wp.WrapperRequest) (wp.WrapperResponse, error)
+// Runner runs one request against the wrapper under test, and answers what
+// it printed on stdout, checked, and on stderr.
+type Runner func(ctx context.Context, req wp.WrapperRequest) (wp.WrapperResponse, string, error)
 
 // Target is a wrapper and the venue account it is run against.
 type Target struct {
 	Description wp.Description
 	Connection  wp.Connection
 	Run         Runner
+	// Revoke runs authorize's revoke at the end, which ends the venue's
+	// grant: a later run needs a person to authorize again.
+	Revoke bool
 }
 
 // Outcome is how one check came out.
@@ -96,6 +101,10 @@ type suite struct {
 	t      Target
 	now    time.Time
 	report Report
+	// seen is everything the wrapper printed, each response with its
+	// credentials taken out and each stderr in full, for the check that no
+	// credential leaks into either.
+	seen []string
 }
 
 // Run runs the suite. now fixes the windows it reads, so a run is repeatable.
@@ -110,6 +119,8 @@ func Run(ctx context.Context, t Target, now time.Time) Report {
 	s.declaredAbsent(ctx, m)
 	s.unknownVerb(ctx)
 	s.honoured(ctx, m)
+	s.revokeAtEnd(ctx, m)
+	s.credentialsStayPut()
 	return s.report
 }
 
@@ -118,16 +129,20 @@ func (s *suite) add(c Check) { s.report.Checks = append(s.report.Checks, c) }
 // call runs calls in one request and returns each call's result, or the
 // sentence for why there is none.
 func (s *suite) call(ctx context.Context, calls ...wp.VerbCall) ([]wp.VerbResult, time.Duration, error) {
-	return s.callAs(ctx, wp.ContractVersion, calls...)
+	return s.callAs(ctx, s.t.Description.Contract, calls...)
 }
 
 func (s *suite) callAs(ctx context.Context, contract string, calls ...wp.VerbCall) ([]wp.VerbResult, time.Duration, error) {
 	start := time.Now()
-	resp, err := s.t.Run(ctx, wp.WrapperRequest{Contract: contract, Connection: s.t.Connection, Calls: calls})
+	resp, stderr, err := s.t.Run(ctx, wp.WrapperRequest{Contract: contract, Connection: s.t.Connection, Calls: calls})
 	elapsed := time.Since(start)
+	s.seen = append(s.seen, stderr)
 	if err != nil {
+		s.seen = append(s.seen, err.Error())
 		return nil, elapsed, err
 	}
+	kept, _ := json.Marshal(resp.Redacted())
+	s.seen = append(s.seen, string(kept))
 	return resp.Results, elapsed, nil
 }
 
@@ -169,8 +184,8 @@ func (s *suite) probe(ctx context.Context) *wp.CapabilityManifest {
 		c.Outcome, c.Detail = Fail, err.Error()
 	case !res.Succeeded():
 		c.Outcome, c.Detail = Fail, res.Why()
-	case res.Manifest.Check() != "":
-		c.Outcome, c.Detail = Fail, res.Manifest.Check()
+	case res.Manifest.CheckAs(d.Contract) != "":
+		c.Outcome, c.Detail = Fail, res.Manifest.CheckAs(d.Contract)
 	default:
 		c.Outcome = Pass
 	}
@@ -215,7 +230,7 @@ func (s *suite) probe(ctx context.Context) *wp.CapabilityManifest {
 // --- 3. Declared absent ---
 
 func (s *suite) declaredAbsent(ctx context.Context, m *wp.CapabilityManifest) {
-	for _, v := range wp.ContractVerbs() {
+	for _, v := range wp.VerbsOf(s.t.Description.Contract) {
 		if m.Verbs[v].Level != wp.VerbDeclined {
 			continue
 		}
@@ -254,9 +269,13 @@ func (s *suite) unknownVerb(ctx context.Context) {
 // --- 4 and 5. Honoured verbs ---
 
 func (s *suite) honoured(ctx context.Context, m *wp.CapabilityManifest) {
-	for _, v := range wp.ContractVerbs() {
+	// The action surface is exercised as one lifecycle, which is how it is
+	// judged: what was published is read back, counted and retracted.
+	lifecycle := map[wp.Verb]bool{wp.VerbPublish: true, wp.VerbStatus: true, wp.VerbReadBack: true,
+		wp.VerbReadMetrics: true, wp.VerbRetract: true}
+	for _, v := range wp.VerbsOf(s.t.Description.Contract) {
 		level := m.Verbs[v].Level
-		if level == wp.VerbDeclined || v == wp.VerbProbe {
+		if level == wp.VerbDeclined || v == wp.VerbProbe || (lifecycle[v] && v != wp.VerbPublish) {
 			continue
 		}
 		switch v {
@@ -264,6 +283,10 @@ func (s *suite) honoured(ctx context.Context, m *wp.CapabilityManifest) {
 			s.readTotals(ctx, m)
 		case wp.VerbReadSeries:
 			s.readSeries(ctx, m)
+		case wp.VerbAuthorize:
+			s.authorize(ctx, m)
+		case wp.VerbPublish:
+			s.publishLifecycle(ctx, m)
 		default:
 			s.add(Check{Name: "an honoured verb is exercised", Verb: v, Outcome: Untested,
 				Detail: fmt.Sprintf("declared %s; the suite cannot exercise %s yet", level, v)})

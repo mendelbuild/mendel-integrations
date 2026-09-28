@@ -25,6 +25,7 @@ type fake struct {
 	ignoresFilter       bool // answers a filter on a dimension it lacks
 	seriesDisagrees     bool // a series that does not sum to the total
 	partialSeries       bool // declares read_series partial
+	leaksToStderr       bool // prints its key on stderr
 }
 
 // perDay is the fake's traffic: n pageviews on the nth day of the month, and
@@ -68,7 +69,16 @@ func (f fake) manifest() *wp.CapabilityManifest {
 	return m
 }
 
-func (f fake) run(_ context.Context, req wp.WrapperRequest) (wp.WrapperResponse, error) {
+func (f fake) run(ctx context.Context, req wp.WrapperRequest) (wp.WrapperResponse, string, error) {
+	resp, err := f.respond(ctx, req)
+	stderr := ""
+	if f.leaksToStderr {
+		stderr = "debug: calling with key " + req.Connection.Credentials["ACME_KEY"]
+	}
+	return resp, stderr, err
+}
+
+func (f fake) respond(_ context.Context, req wp.WrapperRequest) (wp.WrapperResponse, error) {
 	var out wp.WrapperResponse
 	if req.Contract != wp.ContractVersion && !f.actsOnOtherContract {
 		out.Results = append(out.Results, wp.VerbResult{Verb: req.Calls[0].Verb, Refused: "this wrapper speaks contract 1"})
@@ -154,7 +164,8 @@ func description() wp.Description {
 var now = time.Date(2026, 9, 24, 10, 30, 0, 0, time.UTC) // a Thursday
 
 func runFake(f fake) Report {
-	return Run(context.Background(), Target{Description: description(), Run: f.run}, now)
+	return Run(context.Background(), Target{Description: description(), Run: f.run,
+		Connection: wp.Connection{AccountID: "acme.example", Credentials: map[string]string{"ACME_KEY": "acme-key-SECRET"}}}, now)
 }
 
 func TestAWrapperThatKeepsTheContractPasses(t *testing.T) {
@@ -185,6 +196,7 @@ func TestEveryMutantIsCaught(t *testing.T) {
 		"drops empty steps":         {fake{dropsEmptySteps: true}, "series is read at a declared granularity"},
 		"ignores a filter":          {fake{ignoresFilter: true}, "dimension not declared"},
 		"series disagrees":          {fake{seriesDisagrees: true}, "sums to the count"},
+		"leaks its key":             {fake{leaksToStderr: true}, "no credential appears"},
 	} {
 		r := runFake(tc.f)
 		if r.Passed() {
@@ -224,14 +236,14 @@ func TestADeclaredCaveatWarnsRatherThanFails(t *testing.T) {
 // a pass.
 func TestAnHonouredVerbTheSuiteCannotExerciseIsUntested(t *testing.T) {
 	f := fake{}
-	r := Run(context.Background(), Target{Description: description(), Run: func(ctx context.Context, req wp.WrapperRequest) (wp.WrapperResponse, error) {
-		resp, err := f.run(ctx, req)
+	r := Run(context.Background(), Target{Description: description(), Run: func(ctx context.Context, req wp.WrapperRequest) (wp.WrapperResponse, string, error) {
+		resp, err := f.respond(ctx, req)
 		for i := range resp.Results {
 			if resp.Results[i].Manifest != nil {
 				resp.Results[i].Manifest.Verbs[wp.VerbSearch] = wp.VerbSupport{Level: wp.VerbSupported}
 			}
 		}
-		return resp, err
+		return resp, "", err
 	}}, now)
 	if r.Passed() || r.Count()[Untested] != 1 {
 		t.Errorf("passed %v, untested %d", r.Passed(), r.Count()[Untested])

@@ -113,6 +113,22 @@ type VerbCall struct {
 	Window      *Window  `json:"window,omitempty"`
 	Granularity string   `json:"granularity,omitempty"`
 	Filter      *Filter  `json:"filter,omitempty"`
+
+	// The rest are contract 2-draft's (draft.go): authorize's step and its
+	// arguments, the action surface's asset and reference, and search's
+	// query. Code is a secret, as the credentials are.
+	Step           string          `json:"step,omitempty"`
+	RedirectURI    string          `json:"redirect_uri,omitempty"`
+	State          string          `json:"state,omitempty"`
+	Code           string          `json:"code,omitempty"`
+	AssetKind      string          `json:"asset_kind,omitempty"`
+	Payload        json.RawMessage `json:"payload,omitempty"`
+	Ref            string          `json:"ref,omitempty"`
+	When           *When           `json:"when,omitempty"`
+	IdempotencyKey string          `json:"idempotency_key,omitempty"`
+	Query          string          `json:"query,omitempty"`
+	Limit          int             `json:"limit,omitempty"`
+	Prefix         string          `json:"prefix,omitempty"`
 }
 
 // Measure is what is counted: an event and how it is aggregated. The
@@ -166,6 +182,23 @@ type VerbResult struct {
 	Series []SeriesPoint `json:"series,omitempty"`
 	// Total is read_total's answer.
 	Total *Reading `json:"total,omitempty"`
+
+	// The rest are contract 2-draft's (draft.go).
+	//
+	// Credentials are what authorize produced, for Mendel to hold encrypted
+	// and hand back on every later run. They are secret: only authorize may
+	// carry them (ParseWrapperResponse refuses them anywhere else), and what
+	// Mendel keeps of a response is Redacted first.
+	Credentials  map[string]string       `json:"credentials,omitempty"`
+	AuthorizeURL string                  `json:"authorize_url,omitempty"`
+	Ref          string                  `json:"ref,omitempty"`
+	URL          string                  `json:"url,omitempty"`
+	Status       *AssetStatus            `json:"status,omitempty"`
+	Asset        json.RawMessage         `json:"asset,omitempty"`
+	AssetMetrics map[string]FieldReading `json:"asset_metrics,omitempty"`
+	Retracted    string                  `json:"retracted,omitempty"`
+	Items        []Item                  `json:"items,omitempty"`
+	Owned        []string                `json:"owned,omitempty"`
 
 	// Refused is a designed outcome the wrapper will not do: a granularity
 	// the tool lacks, a metric declared unavailable, a filter on a dimension
@@ -279,6 +312,13 @@ type CapabilityManifest struct {
 	// what is read (§12), with the source cited. The data-licensing
 	// obligation is judged against it.
 	StoragePolicy string `json:"storage_policy"`
+
+	// The rest are contract 2-draft's (draft.go): how the wrapper connects
+	// an account, the External Asset Kinds it can act on, and how far back a
+	// search reaches.
+	Authorization *AuthorizationSupport  `json:"authorization,omitempty"`
+	Kinds         map[string]KindSupport `json:"kinds,omitempty"`
+	SearchHorizon string                 `json:"search_horizon,omitempty"`
 }
 
 // manifestVenues are the venues §8 names.
@@ -287,17 +327,22 @@ var manifestVenues = []string{"test_account", "reversible_writes", "read_only", 
 // Check refuses a malformed manifest, the way experiment.MigrationContract
 // refuses a malformed contract at the probe: a manifest Mendel plans from
 // has to answer every question, and "did not say" is not an answer.
-func (m *CapabilityManifest) Check() string {
+func (m *CapabilityManifest) Check() string { return m.CheckAs(ContractVersion) }
+
+// CheckAs checks a manifest against a contract version the caller speaks:
+// ContractVersion for Mendel's server, and DraftContractVersion as well for a
+// conformance run of a wrapper written against the draft.
+func (m *CapabilityManifest) CheckAs(contract string) string {
 	if m == nil {
 		return "the probe returned no manifest"
 	}
-	if m.Contract != ContractVersion {
-		return fmt.Sprintf("the manifest is for contract %q; Mendel speaks %q", m.Contract, ContractVersion)
+	if m.Contract != contract {
+		return fmt.Sprintf("the manifest is for contract %q; Mendel speaks %q", m.Contract, contract)
 	}
 	if m.Wrapper.Version == "" || m.Wrapper.SpecSource == "" || m.Wrapper.SpecHash == "" {
 		return "the manifest does not say which wrapper version answered or which spec it was written against"
 	}
-	for _, v := range ContractVerbs() {
+	for _, v := range VerbsOf(contract) {
 		s, ok := m.Verbs[v]
 		if !ok {
 			return fmt.Sprintf("the manifest does not answer for verb %s; a verb it lacks is declined, not omitted", v)
@@ -320,15 +365,20 @@ func (m *CapabilityManifest) Check() string {
 		}
 	}
 	for v := range m.Verbs {
-		if !isContractVerb(v) {
+		if !isVerbOf(contract, v) {
 			return fmt.Sprintf("the manifest answers for %q, which is not a verb of the contract", v)
 		}
 	}
 	if m.Verbs[VerbProbe].Level != VerbSupported {
 		return "a wrapper that answered probe must declare probe supported"
 	}
-	if len(m.Metrics) == 0 {
+	if len(m.Metrics) == 0 && (contract == ContractVersion || m.readsNumbers()) {
 		return "the manifest lists no metrics; a data source with nothing to read is not one"
+	}
+	if contract == DraftContractVersion {
+		if why := m.checkDraft(); why != "" {
+			return why
+		}
 	}
 	for _, ms := range SortedMetrics(m.Metrics) {
 		switch ms.Support.Level {
@@ -391,8 +441,8 @@ func (m *CapabilityManifest) IsDataSource() bool {
 	return true
 }
 
-func isContractVerb(v Verb) bool {
-	for _, c := range ContractVerbs() {
+func isVerbOf(contract string, v Verb) bool {
+	for _, c := range VerbsOf(contract) {
 		if c == v {
 			return true
 		}
@@ -528,6 +578,7 @@ func (i JobInstruction) Redacted() JobInstruction {
 		creds[name] = ""
 	}
 	out.Request.Connection.Credentials = creds
+	out.Request.Calls = redactedCalls(i.Request.Calls)
 	return out
 }
 
@@ -582,7 +633,12 @@ func (r JobReport) Check(asked JobInstruction) string {
 func ParseWrapperResponse(stdout []byte, calls int) (WrapperResponse, error) {
 	var resp WrapperResponse
 	if err := json.Unmarshal(stdout, &resp); err != nil {
-		return WrapperResponse{}, fmt.Errorf("the wrapper's answer is not readable as JSON: %v: %s", err, tail(string(stdout), 512))
+		return WrapperResponse{}, fmt.Errorf("the wrapper's answer is not readable as JSON: %v: %s", err, quotable(stdout))
+	}
+	for i, r := range resp.Results {
+		if len(r.Credentials) > 0 && r.Verb != VerbAuthorize {
+			return WrapperResponse{}, fmt.Errorf("result %d (%s) carries credentials, which only authorize may return", i, r.Verb)
+		}
 	}
 	if len(resp.Results) == 0 {
 		return WrapperResponse{}, fmt.Errorf("the wrapper answered nothing for %d calls", calls)

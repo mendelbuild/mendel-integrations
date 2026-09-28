@@ -16,8 +16,10 @@ was seen, what it means for the contract, and what, if anything, was done.
 |---|---|
 | Conformance harness (`conformance/`, `cmd/conformance`) | Built; mutation-tested against ten mutants |
 | Local venue for Plausible (`venues/plausible-ce/`) | Built; 36 of 36 checks pass against the real thing |
-| Mastodon wrapper (publisher, OAuth) | Next; blocked on the contract, finding 1 |
-| Tavily wrapper (search) | After Mastodon; blocked on the contract, finding 1 |
+| Contract 2-draft (`wrapperprotocol/draft.go` in Mendel) | Built: `authorize` with steps, a secret `credentials` field, the action surface's and search's fields |
+| Harness for the draft | Built: authorize, a publish-to-retract lifecycle, boundaries, a credential-leak check; 19 mutants across two fakes |
+| Mastodon wrapper (publisher, OAuth) | Built and tested against a fake instance; probes mastodon.social; waiting on a person to authorize the venue account |
+| Tavily wrapper (search) | Next |
 | Generation test | Last |
 
 ## Findings
@@ -69,3 +71,42 @@ read as a total, which holds on Plausible for a UTC site. It cannot confirm
 that 37 is right: only a venue that sent the 37 knows that. A venue should
 hand the suite its expected values, so a wrapper that reads the wrong metric
 consistently still fails. Not built yet.
+
+**6. Authorization is one verb with steps, owned by the wrapper, and `begin`
+produces secrets too.** Decided with Ben (§19, 2026-09-28): the alternative,
+Mendel running every tool's OAuth from a config block, would put each tool's
+variant in Mendel's server. Mastodon shows why: there is no fixed client, so
+`begin` registers one on the person's own instance, and that client's secret
+has to be kept until `complete` (and after, to revoke). So `credentials` can
+come back from `begin` as well as `complete`, and Mendel merges them. `revoke`
+is a step too: disconnecting should end the grant at the tool, not just forget
+the token.
+
+**7. Some tools honour idempotency natively, and publish needs to carry
+Mendel's key.** §6 found native idempotency on almost nothing and planned for
+Mendel to build it from a naming prefix and `list_owned`. Mastodon takes an
+`Idempotency-Key` on posting and keeps it an hour, and has no name to prefix
+and no search of an account's own posts, so `list_owned` is declined and the
+key is the mechanism. The draft's publish carries `idempotency_key`; the
+harness checks a repeat is the same asset when the manifest declares native
+idempotency.
+
+**8. `publish(ref, when)` assumes a draft, and many tools have none.** §6's
+publish takes a ref from `draft`. A Mastodon post is live to its audience the
+moment it exists, so `draft` is declined and publish has to take the payload
+itself. The draft allows either. (Mastodon does have one not-live state, a
+status scheduled at least five minutes ahead, which a later version could use
+as `draft`: it would make the whole lifecycle rehearsable with nothing ever
+visible.)
+
+**9. The connection's config has no declared shape.** A post's visibility is
+a setting of the project's (§6: "a setting is config"), and the wrapper
+defaults it to followers-only, but nothing tells Mendel the setting exists or
+what it may be. `wrapper.json` declares the connection's fields; it should
+declare the config's too, the same way.
+
+**10. `describe_shape` and `limits` repeat what the manifest already says.**
+The manifest carries each kind's shape (refined per instance: 475 characters
+beside a link on mastodon.social) and the rate limits in its entitlements, so
+both verbs are declined with that reason. Worth removing from the contract
+rather than having every wrapper decline them.

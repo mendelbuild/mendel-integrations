@@ -57,6 +57,11 @@ type ConnectionSpec struct {
 	Account     *Field  `json:"account,omitempty"`
 	Credentials []Field `json:"credentials"`
 	Endpoint    *Field  `json:"endpoint,omitempty"`
+	// Authorize says the credentials are produced by the authorize verb
+	// (contract 2-draft) rather than typed by a person: the connect form
+	// offers a link to the tool instead of fields, and the names above are
+	// what authorize is expected to answer.
+	Authorize bool `json:"authorize,omitempty"`
 }
 
 // Field is one value a person enters to connect.
@@ -95,6 +100,8 @@ func (d Description) Check() string {
 		return "connection asks for nothing; a project could not say which account is its own"
 	case len(d.Claims) == 0:
 		return "claims is empty; a wrapper that claims nothing cannot be offered for anything"
+	case d.Connection.Authorize && d.Claims[string(VerbAuthorize)] == "":
+		return "connection.authorize is set and authorize is not claimed; say how the credentials are produced"
 	}
 	for i, part := range d.Command {
 		if part == "" {
