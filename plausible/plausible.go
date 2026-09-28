@@ -226,9 +226,10 @@ func metrics() map[string]metricSupport {
 	return map[string]metricSupport{
 		"pageviews": {Level: "available", Aggregations: []string{"count"}},
 		"visits":    {Level: "available", Aggregations: []string{"count"}},
-		"events": {Level: "available", Aggregations: []string{"count"},
-			Quality: []string{"any other event name is read as a goal configured on the site: count is its " +
-				"events, unique its visitors"}},
+		// Any other event name is read as a goal configured on the site
+		// (plan, below). The contract has no way to declare an open family
+		// of metrics, so that rule is in README.md and not in the manifest.
+		"events": {Level: "available", Aggregations: []string{"count"}},
 		"visitors":        {Level: "available", Aggregations: []string{"unique"}, Uniqueness: visitorsUniqueness},
 		"bounce_rate":     notACount("bounce_rate"),
 		"visit_duration":  notACount("visit_duration"),

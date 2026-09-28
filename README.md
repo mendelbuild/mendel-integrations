@@ -5,23 +5,40 @@ Tool (dev/claude_plans/35_tools_outside_the_codebase.md §6, §8). It holds no
 project's choices: everything that varies arrives in the request, and
 everything the tool can do is declared in the answer to `probe`.
 
-One directory per tool. The first is [`plausible/`](plausible/), a read-only
-data source. **Everything about a tool lives with its wrapper**, and Mendel's
-server never names one: `internal/external.TestNoWrappedToolIsNamedInTheServer`
-fails if a shipped tool's name, slug, credential names or image appear under
-`internal/` or `cmd/`.
+One directory per tool, named for the tool's slug. The first is
+[`plausible/`](plausible/), a read-only data source. **Everything about a tool
+lives with its wrapper, here or wherever its author keeps it, and never in
+Mendel's repository or binaries**: nothing is embedded or seeded, so a tool
+Mendel knows is one someone registered, and Mendel's own tests fail if a
+wrapped tool is named in its server code.
 
-A wrapper reaches an installation one of two ways, and **only one needs a
-Mendel deploy**:
+A wrapper reaches an installation one way: a Mendel admin registers its
+`wrapper.json` with its image pinned by digest, from the admin area's External
+Tools tab or `mendel-tool tools register`. No Mendel deploy is involved. This
+repository's workflow publishes the images (see "Publishing").
 
-- **Shipped:** a directory here. Its `wrapper.json` is embedded in Mendel's
-  binary and seeded with a deploy, and its image is still built and pushed on
-  its own. A shipped definition arrives unpinned, and runs only once a Mendel
-  admin registers it with a digest, like any other.
-- **Registered:** a wrapper built and pushed anywhere, entered from the Mendel
-  admin area's External Tools tab or `mendel-tool tools register` with its
-  `wrapper.json` and its image pinned by digest. No Mendel deploy. This is
-  how a tool enters the promotion pipeline (doc 35 §9).
+## Conformance
+
+`cmd/conformance` runs a wrapper through the contract against a venue account
+of your own and says, check by check, what it found: pass, fail, warn, or
+untested (a verb the suite cannot exercise yet, which is never a pass). It
+needs no Mendel and no database. The suite is `conformance/`, and its own tests
+are mutants of a small wrapper that each break one rule and must each be caught
+by the check about that rule (doc 35 §8).
+
+```bash
+go run -mod=vendor ./cmd/conformance -file <tool>/wrapper.json \
+    (-image <image> | -cmd <built binary>) -account <venue account> [-endpoint URL] [-at RFC3339] [-json out.json]
+```
+
+Credentials come from the shell's environment under the names `wrapper.json`
+gives them. `venues/` holds local venues for tools that can run on this
+machine: `venues/plausible-ce/up.sh` brings up a Plausible Community Edition
+with known traffic, so the Plausible wrapper is checked with nobody's
+Plausible account.
+
+What the suite and the wrappers have taught so far about the contract itself
+is in [`SPIKE.md`](SPIKE.md).
 
 The Go types for everything below are in `wrapperprotocol` (at the root of Mendel's module),
 which is the source of truth. A wrapper may restate them rather than import

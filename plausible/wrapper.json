@@ -5,7 +5,7 @@
     "homepage": "https://plausible.io",
     "categories": ["know what visitors do"]
   },
-  "version": "0.1.0",
+  "version": "0.1.1",
   "contract": "1",
   "image": "mendel-tool-plausible:dev",
   "command": ["/plausible"],
