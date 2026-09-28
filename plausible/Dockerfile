@@ -5,12 +5,13 @@
 #
 # The build stage runs on the builder's own platform and cross-compiles to
 # linux/amd64, so nothing is compiled under emulation. The wrapper uses the
-# standard library only, so it needs go.mod and its own directory and nothing
-# else from the tree.
+# standard library only; the vendored protocol is copied so the build reads
+# no module from the network (Mendel's module is private).
 
 FROM --platform=$BUILDPLATFORM golang:1.26 AS build
 WORKDIR /src
 COPY go.mod go.sum ./
+COPY vendor ./vendor
 COPY plausible ./plausible
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     go build -trimpath -ldflags="-s -w" -o /out/plausible ./plausible

@@ -201,8 +201,10 @@ before every read:
    tag is refused, because it can be moved to other bytes after the first
    ones were checked; only the pinned image ever runs. To run in a project's
    cluster the pin must be a **registry digest**, `name@sha256:<64 hex>`,
-   **in Mendel's public `mendel-integrations` repository**: a project's cluster can
-   pull from its own registry and from that one, and nothing else. A local
+   **on a public registry**: a project's cluster can pull from its own
+   registry and from a public one, and nothing else. This repository's
+   workflow publishes every wrapper to `ghcr.io/mendelbuild/<slug>:<version>`
+   on push to `main`, and prints the digest to register. A local
    image's id (`sha256:<64 hex>`, from `docker image inspect --format
    '{{.Id}}'`) is still accepted, for a Mendel admin's own verification, and
    the condition says why a project cannot run it. Retiring stops a version
@@ -229,9 +231,10 @@ Which version runs, of those pinned and not retired: one a cluster can pull
 before a local id, a reviewed one before an unreviewed one, then the newest.
 
 ```bash
-docker push us-central1-docker.pkg.dev/<mendel project>/mendel-integrations/acme-analytics:1.0
+# Merged to main, the workflow publishes ghcr.io/mendelbuild/acme-analytics:1.0
+# and prints its digest in the run's summary.
 mendel-tool tools register -file wrapper.json \
-  -image us-central1-docker.pkg.dev/<mendel project>/mendel-integrations/acme-analytics@sha256:...
+  -image ghcr.io/mendelbuild/acme-analytics@sha256:...
 ACME_ANALYTICS_KEY=... mendel-tool tools verify acme-analytics 1.0 -account venue.example
 mendel-tool tools retire acme-analytics 1.0 -reason "sent a key to the wrong host"
 ```
@@ -277,8 +280,8 @@ account. Logged, and never priced.
 A tool nobody has wrapped yet can be named for wrapping, with what it is for,
 from the Mendel admin area's External Tools tab or with `mendel-tool tools
 request`. The request records the need and the verbs that follow from it, which
-is what the wrapper is written to; it closes as wrapped when the registry seeds
-a wrapper for the tool.
+is what the wrapper is written to; it closes as wrapped when a wrapper for the
+tool is registered.
 
 1. Fetch the tool's current API documentation and cite it, with the date, in
    the wrapper's README. Do not write a wrapper from memory of an API.
@@ -293,5 +296,8 @@ a wrapper for the tool.
 6. A `wrapper.json`, and a test that it agrees with what the wrapper answers
    and that its `command` is the Dockerfile's `ENTRYPOINT`, as `plausible/`
    has.
-7. Push the image to Mendel's public `mendel-integrations` repository and register it
-   by the digest the push printed, so a project's cluster can pull it.
+7. Merge to `main`. The workflow publishes the image to
+   `ghcr.io/mendelbuild/<slug>:<version>` and prints the digest to register;
+   a version's tag is never rebuilt, so a changed wrapper is a new version.
+   The package must be public, which is a one-time setting on GitHub after
+   the first push, or no project's cluster can pull it.
