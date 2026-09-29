@@ -5,7 +5,7 @@
     "homepage": "https://joinmastodon.org",
     "categories": ["reach people where they already are"]
   },
-  "version": "0.2.0",
+  "version": "0.2.1",
   "contract": "2",
   "image": "mendel-tool-mastodon:dev",
   "command": ["/mastodon"],

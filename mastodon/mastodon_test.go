@@ -188,7 +188,7 @@ func TestAuthorizeRegistersOnceExchangesTheCodeAndRevokes(t *testing.T) {
 
 func TestAPostsLifeFromPublishToRetract(t *testing.T) {
 	f := newFake()
-	payload := json.RawMessage(`{"text":"Hello from a conformance run","link":"https://mendel.build/x"}`)
+	payload := json.RawMessage(`{"text":"Hello from a conformance run","link":"https://mendel.build/x","media":null}`)
 	pub := wp.VerbCall{Verb: wp.VerbPublish, AssetKind: "social_post", Payload: payload,
 		When: &wp.When{Mode: wp.WhenNow}, IdempotencyKey: "key-1"}
 	resp, _ := do(t, f, authorized(f), nil, pub)
@@ -240,7 +240,8 @@ func TestPublishRefusesWhatTheShapeDoesNotAllow(t *testing.T) {
 	for name, c := range map[string]wp.VerbCall{
 		"too long":       {Payload: json.RawMessage(`{"text":"` + strings.Repeat("x", 476) + `"}`)},
 		"no text":        {Payload: json.RawMessage(`{"text":" "}`)},
-		"an extra field": {Payload: json.RawMessage(`{"text":"hi","media":[]}`)},
+		"an extra field": {Payload: json.RawMessage(`{"text":"hi","poll":[]}`)},
+		"media":          {Payload: json.RawMessage(`{"text":"hi","link":null,"media":"a photo of the launch"}`)},
 		"a bad link":     {Payload: json.RawMessage(`{"text":"hi","link":"not a url"}`)},
 		"scheduled":      {Payload: json.RawMessage(`{"text":"hi"}`), When: &wp.When{Mode: wp.WhenAt}},
 		"another kind":   {Payload: json.RawMessage(`{"text":"hi"}`), AssetKind: "listing"},

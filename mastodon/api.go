@@ -207,15 +207,20 @@ func postShape(inst instance) json.RawMessage {
 	if perURL == 0 {
 		perURL = 23
 	}
+	// A refinement of the social_post family (doc 35 §7): every family field
+	// kept and required, text narrowed to what fits beside a link, and media
+	// narrowed to null, since this wrapper attaches none.
 	shape := map[string]any{
 		"type":                 "object",
 		"additionalProperties": false,
-		"required":             []string{"text"},
+		"required":             []string{"text", "link", "media"},
 		"properties": map[string]any{
 			"text": map[string]any{"type": "string", "minLength": 1, "maxLength": max - perURL - 2,
 				"description": fmt.Sprintf("Up to %d characters, so a link fits beside it (a link counts as %d).", max-perURL-2, perURL)},
-			"link": map[string]any{"type": "string", "format": "uri",
-				"description": "Appended after a blank line; the instance counts it as a fixed length."},
+			"link": map[string]any{"type": []string{"string", "null"}, "format": "uri",
+				"description": "Appended after a blank line; the instance counts it as a fixed length. Null for none."},
+			"media": map[string]any{"type": "null",
+				"description": "Always null: this wrapper attaches no media."},
 		},
 	}
 	raw, _ := json.Marshal(shape)
@@ -365,9 +370,12 @@ func (a *api) revoke(ctx context.Context) wp.VerbResult {
 // --- the action surface ---
 
 // post is a social_post as the family has it.
+// post is a social_post as the family has it: every field present, link
+// and media null when there are none.
 type post struct {
-	Text string `json:"text"`
-	Link string `json:"link,omitempty"`
+	Text  string  `json:"text"`
+	Link  *string `json:"link"`
+	Media *string `json:"media"`
 }
 
 // posted is what the wrapper reads of the Status a post creates.
@@ -395,6 +403,10 @@ func (a *api) publish(ctx context.Context, c wp.VerbCall) wp.VerbResult {
 	if strings.TrimSpace(p.Text) == "" {
 		return wp.VerbResult{Verb: v, Refused: "a social_post needs text"}
 	}
+	if p.Media != nil {
+		return wp.VerbResult{Verb: v, Refused: "this wrapper attaches no media; publish the post with media null, " +
+			"or attach it by hand"}
+	}
 	var inst instance
 	if err := a.call(ctx, http.MethodGet, "/api/v2/instance", nil, nil, nil, &inst); err != nil {
 		return failed(v, err)
@@ -411,14 +423,14 @@ func (a *api) publish(ctx context.Context, c wp.VerbCall) wp.VerbResult {
 		return wp.VerbResult{Verb: v, Refused: fmt.Sprintf("the text is %d characters; this instance takes %d beside a link",
 			n, shape.Properties.Text.MaxLength)}
 	}
-	if p.Link != "" {
-		if u, err := url.Parse(p.Link); err != nil || (u.Scheme != "https" && u.Scheme != "http") || u.Host == "" {
+	if p.Link != nil {
+		if u, err := url.Parse(*p.Link); err != nil || (u.Scheme != "https" && u.Scheme != "http") || u.Host == "" {
 			return wp.VerbResult{Verb: v, Refused: "the link is not an http(s) URL"}
 		}
 	}
 	text := p.Text
-	if p.Link != "" {
-		text += "\n\n" + p.Link
+	if p.Link != nil {
+		text += "\n\n" + *p.Link
 	}
 	visibility := "private"
 	if cfg, ok := a.conn.Config["visibility"].(string); ok && cfg != "" {
@@ -498,7 +510,7 @@ func (a *api) readBack(ctx context.Context, c wp.VerbCall) wp.VerbResult {
 	if i := strings.LastIndex(src.Text, "\n\n"); i >= 0 {
 		last := src.Text[i+2:]
 		if u, err := url.Parse(last); err == nil && (u.Scheme == "https" || u.Scheme == "http") && u.Host != "" && !strings.ContainsAny(last, " \n") {
-			p = post{Text: src.Text[:i], Link: last}
+			p = post{Text: src.Text[:i], Link: &last}
 		}
 	}
 	asset, _ := json.Marshal(p)

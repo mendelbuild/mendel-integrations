@@ -157,12 +157,15 @@ func fit(s string, max int) string {
 func knownKinds() map[string]payloads {
 	return map[string]payloads{
 		"social_post": {
+			// Every field of the family (doc 35 §7), link and media nullable
+			// and required: a wrapper's shape refines the family, never
+			// drops a field of it.
 			valid: func(max int) map[string]any {
 				return map[string]any{"text": fit("Mendel conformance check "+nonce()+". This post is deleted within the minute.", max),
-					"link": "https://mendel.build/?conformance=" + nonce()}
+					"link": "https://mendel.build/?conformance=" + nonce(), "media": nil}
 			},
-			tooLong:    func(max int) map[string]any { return map[string]any{"text": strings.Repeat("x", max+1)} },
-			incomplete: map[string]any{"link": "https://mendel.build/"},
+			tooLong:    func(max int) map[string]any { return map[string]any{"text": strings.Repeat("x", max+1), "link": nil, "media": nil} },
+			incomplete: map[string]any{"link": "https://mendel.build/", "media": nil},
 			lengthOf:   "text",
 		},
 	}

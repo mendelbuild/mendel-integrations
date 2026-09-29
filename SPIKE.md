@@ -235,3 +235,15 @@ check meaning where it can:
   rate as a sum is refused. A wrapper that mislabels the kind itself is still
   caught only by a person reading it; additivity against a venue with spread
   traffic would catch that, and is not built.
+
+**15. The harness and a wrapper both drifted from the family schema, the
+same way.** Feeding the `social_post` family schema to the generation test
+showed it requires `text`, `link` and `media`, the last two nullable. The
+hand-written Mastodon wrapper refused a `media` field outright, and the
+harness published posts without one, so each agreed with the other and
+neither with the kind's contract -- exactly what doc 35 §8 guards against in
+saying conformance is "data-driven by the family schema". *Done:* the harness
+sends family-conformant posts, the wrapper's shape refines the family (every
+field kept and required, `media` narrowed to null) and it refuses media it
+cannot attach (0.2.1). *Still to do:* the suite should build its payloads from
+the family schema itself, rather than from a row it holds per kind.

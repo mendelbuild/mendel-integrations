@@ -57,6 +57,24 @@ TOOLS = {
         "expect": REPO / "venues/plausible-ce/.work/expected.json",
         "keyfile": REPO / "venues/plausible-ce/.work/venue.env", "keyvar": "PLAUSIBLE_API_KEY",
         "venue": "a self-hosted Plausible Community Edition, reached through the connection's endpoint",
+        "credentials": "the Stats API key, as a credential a person types",
+    },
+    "mastodon": {
+        "name": "Mastodon", "homepage": "https://joinmastodon.org", "contract": "2",
+        "role": "a publisher: a project connects an account through the instance's own OAuth (authorize, with the "
+                "steps begin, complete and revoke), and Mendel publishes, reads back, reads the counts of and "
+                "retracts a social_post (the External Asset Kind whose family schema is "
+                "spec/mastodon/social_post.family.schema.json); every other verb declared absent with its reason",
+        "account": "mastodon.social", "endpoint": None, "at": None, "expect": None,
+        # Authorized, not typed: the suite reads the venue's grant, made once by
+        # a person with `conformance authorize`, from its credentials file.
+        "keyfile": None, "keyvar": None, "config": ["visibility=private"],
+        "credentials": "MASTODON_CLIENT_ID and MASTODON_REDIRECT_URI (public), MASTODON_CLIENT_SECRET and "
+                       "MASTODON_ACCESS_TOKEN, in the connection's credentials: the venue account's grant was saved "
+                       "under those names",
+        "venue": "a real account on mastodon.social, whose grant a person made once; posts are made with the "
+                 "visibility in the connection's config under the key \"visibility\" (private, for this run) and must "
+                 "be retracted",
     },
     "tavily": {
         "name": "Tavily", "homepage": "https://tavily.com", "contract": "2-draft",
@@ -65,6 +83,7 @@ TOOLS = {
         "account": None, "endpoint": None, "at": None, "expect": None,
         "keyfile": CONFIG_DIR / "tavily.env", "keyvar": "TAVILY_API_KEY",
         "venue": "Tavily's hosted API, on an account whose every search spends credits",
+        "credentials": "the API key, as a credential a person types",
     },
 }
 
@@ -72,7 +91,7 @@ PROMPT = """You are writing an External Tool Wrapper for {name} ({homepage}), fo
 
 Read GUIDE.md first: what a wrapper is, the wire protocol, wrapper.json, and what
 Mendel checks. The protocol's Go types are the source of truth, in
-vendor/github.com/mendelbuild/mendelbuild/wrapperprotocol/ (protocol.go, draft.go,
+vendor/github.com/mendelbuild/mendelbuild/wrapperprotocol/ (protocol.go, surface.go,
 description.go); import that package rather than restating it. {name}'s own API
 documentation, fetched today, is in spec/{slug}/. Write against it, not against
 what you remember of the API, and cite what you used, with the date, in
@@ -83,7 +102,7 @@ Write the wrapper in {slug}/ as package main. It is {role}. It speaks contract
 
 - {slug}/wrapper.json: tool.slug "{slug}", version "0.1.0", contract "{contract}",
   image "mendel-tool-{slug}:dev", a command equal to the Dockerfile's ENTRYPOINT,
-  the connection a person supplies (the API key as a credential), and your claims.
+  the connection ({credentials}), and your claims.
 - {slug}/Dockerfile, as GUIDE.md describes.
 - Standard library and the wrapperprotocol package only. It must build with
   `go build -mod=vendor ./{slug}`.
@@ -172,10 +191,14 @@ def suite(ws: Path, slug: str, cfg: dict) -> dict:
     except Exception as e:  # the suite would refuse it too; say why here
         return {"built": True, "error": f"{slug}/wrapper.json is not readable: {e}"}
     env = dict(os.environ)
-    for n in names:  # whatever the agent named the key, the suite supplies it
-        env[n] = key(cfg)
+    if cfg["keyvar"]:
+        for n in names:  # whatever the agent named the key, the suite supplies it
+            env[n] = key(cfg)
     harness = WORK / "conformance"
     args = [str(harness), "-file", f"{slug}/wrapper.json", "-cmd", "bin/wrapper", "-json", "report.json"]
+    for old in [ws / "report.json"]:
+        if old.exists():
+            old.rename(ws / f"report-{int(time.time() * 1000)}.json")
     if cfg["account"]:
         args += ["-account", cfg["account"]]
     if cfg["endpoint"]:
@@ -184,6 +207,8 @@ def suite(ws: Path, slug: str, cfg: dict) -> dict:
         args += ["-at", cfg["at"]]
     if cfg["expect"]:
         args += ["-expect", str(cfg["expect"])]
+    for kv in cfg.get("config", []):
+        args += ["-config", kv]
     r = subprocess.run(args, cwd=ws, env=env, capture_output=True, text=True, timeout=600)
     if not (ws / "report.json").exists():
         return {"built": True, "error": (r.stdout + r.stderr)[-3000:]}
@@ -194,6 +219,30 @@ def suite(ws: Path, slug: str, cfg: dict) -> dict:
     failing = [c for c in report["checks"] if c["outcome"] in ("fail", "untested")]
     return {"built": True, "counts": counts, "passed": not failing, "text": r.stdout,
             "failures": [f"- {c['outcome'].upper()} {c.get('verb', '-')}: {c['name']}: {c.get('detail', '')}" for c in failing]}
+
+
+def clean_up_posts(ws: Path) -> list:
+    """Retract, with the hand-written wrapper, every post a suite run in this
+    workspace reported, so a generated wrapper whose retract is broken leaves
+    nothing behind. Retract is safe twice, so a post already gone is fine.
+    The venue's grant is read from its credentials file and never printed."""
+    ids = set()
+    for report in ws.glob("report*.json"):
+        for c in json.loads(report.read_text()).get("checks", []):
+            for word in (c.get("detail") or "").split():
+                if "/@" in word and word.rsplit("/", 1)[-1].isdigit():
+                    ids.add(word.rsplit("/", 1)[-1])
+    if not ids:
+        return []
+    creds = json.loads((CONFIG_DIR / "mastodon_mastodon.social.json").read_text())
+    binary = WORK / "mastodon-handwritten"
+    subprocess.run(["go", "build", "-mod=vendor", "-o", str(binary), "./mastodon"], cwd=REPO, check=True)
+    req = {"contract": "2", "connection": {"account_id": "mastodon.social", "credentials": creds},
+           "calls": [{"verb": "retract", "ref": i} for i in sorted(ids)]}
+    p = subprocess.run([str(binary)], input=json.dumps(req), capture_output=True, text=True, timeout=120)
+    results = json.loads(p.stdout).get("results", []) if p.stdout else []
+    return [{"ref": r, "retracted": (results[n].get("retracted") if n < len(results) else None)}
+            for n, r in enumerate(sorted(ids))]
 
 
 def main():
@@ -230,6 +279,8 @@ def main():
     record["repair_rounds"] = len(record["rounds"]) - 1
     record["cost_usd"] = round(sum(r["cost_usd"] or 0 for r in record["rounds"]), 4)
     (ws / "suite-output.txt").write_text(res.get("text") or res.get("error", ""))
+    if slug == "mastodon":
+        record["cleaned_up"] = clean_up_posts(ws)
     out_dir = HERE / "results"
     out_dir.mkdir(exist_ok=True)
     out = out_dir / f"{ws.name}.json"
