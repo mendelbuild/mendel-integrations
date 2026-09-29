@@ -1,7 +1,7 @@
 // Command conformance runs one wrapper through the conformance suite against
 // a venue account, and prints what each check found.
 //
-//	conformance -file plausible/wrapper.json -image ghcr.io/mendelbuild/plausible@sha256:... \
+//	conformance -file plausible/wrapper.json -image ghcr.io/mendelbuild/wrappers-staging@sha256:... \
 //	    -account example.com [-endpoint http://localhost:8000] [-json report.json]
 //
 // or, while writing a wrapper, against its binary with no image at all:

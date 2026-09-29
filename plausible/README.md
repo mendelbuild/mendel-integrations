@@ -63,14 +63,16 @@ From the repository root. The build compiles natively and cross-compiles to
 `linux/amd64`; nothing is compiled under emulation. The tag is a label: Mendel
 runs the image only once a Mendel admin has registered it pinned by digest (see
 `../README.md`, "Registering, reviewing, retiring"). To run in a project's
-cluster it is published to `ghcr.io/mendelbuild/plausible:0.1.1-<commit>` by
-this repository's workflow on push to `main`, and registered by the digest the
-workflow prints; a Mendel admin's review against a venue site promotes it to
-every project:
+cluster it is published to
+`ghcr.io/mendelbuild/wrappers-staging:plausible-0.1.1-<commit>` by this
+repository's workflow on push to `main`, and registered by the digest the
+workflow prints (production registers the same digest from `wrappers-prod`
+once it is promoted; see `../README.md`, "Publishing"); a Mendel admin's review
+against a venue site promotes it to every project:
 
 ```bash
 mendel-tool tools register -file plausible/wrapper.json \
-  -image ghcr.io/mendelbuild/plausible@sha256:<digest the workflow printed>
+  -image ghcr.io/mendelbuild/wrappers-staging@sha256:<digest the workflow printed>
 PLAUSIBLE_API_KEY=... mendel-tool tools verify plausible 0.1.1 -account <venue site>
 ```
 

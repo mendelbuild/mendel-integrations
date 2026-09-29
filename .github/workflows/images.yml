@@ -1,24 +1,38 @@
-# Publishes each changed wrapper's image to
-# ghcr.io/mendelbuild/<directory>:<version>-<commit>.
+# Publishes each changed wrapper's image to the staging wrapper package,
+#
+#   ghcr.io/mendelbuild/wrappers-staging:<slug>-<version>-<commit>
+#
+# and promote.yml copies one, by digest, into the production package,
+# ghcr.io/mendelbuild/wrappers-prod, under the same tag.
+#
+# Every wrapper shares one package per environment, and the tag says which
+# wrapper it is. GitHub creates a package private and has no API to make one
+# public, so a package per wrapper would need a person to click through its
+# settings each time a wrapper is added; a fixed set of packages is made public
+# once. The set is one package per kind of image a project's cluster pulls, per
+# environment: wrappers-staging and wrappers-prod here, and Mendel's
+# wrapper-shim-staging and wrapper-shim-prod, pushed by its gke-deploy.sh.
 #
 # Nothing here checks for a collision, because none can happen:
 #
-#   - The package is the wrapper's directory, and a directory must be named
-#     for the slug its wrapper.json declares. Two wrappers cannot share a
-#     directory, so they cannot share a slug or a package.
-#   - The tag is the wrapper's version and the commit it was built from. A
-#     commit is never built twice, so a tag never moves.
+#   - The slug is the wrapper's directory, and a directory must be named for
+#     the slug its wrapper.json declares, so two wrappers cannot share one.
+#   - The commit is the last part and always twelve hex digits, and the
+#     version, just before it, may not contain a '-' (the find job refuses
+#     one). Read from the right, a tag splits into slug, version and commit
+#     exactly one way, so two wrappers cannot produce the same tag.
+#   - A commit is never built twice, so a tag never moves.
 #
 # Tags are labels for finding a digest; Mendel registers the digest this
-# prints (mendel-tool tools register -image ghcr.io/mendelbuild/<slug>@sha256:...),
+# prints (mendel-tool tools register -image ghcr.io/mendelbuild/wrappers-staging@sha256:...),
 # and each installation's registry refuses a second digest for a version it
 # already holds. So a wrapper rebuilt at a new commit without a new version in
 # its wrapper.json publishes fine and is refused at registration, with the
 # sentence saying why.
 #
-# This workflow is the only writer to these packages, and nothing published is
-# ever deleted: staging and production register the same digests, so an image
-# that looks unused from one environment may be what the other runs.
+# This workflow and promote.yml are the only writers to the wrapper packages,
+# and nothing published is ever deleted: an image that looks unused may be
+# what an installation runs, and a production digest is exactly a staging one.
 name: images
 
 on:
@@ -61,6 +75,24 @@ jobs:
             fi
           done
           exit $status
+      # The tag's parts are separated by '-', so the version cannot contain
+      # one; see the top of this file. A tag is also at most 128 characters.
+      - name: Every wrapper's tag reads one way
+        run: |
+          status=0
+          for f in */wrapper.json; do
+            slug=$(jq -r .tool.slug "$f")
+            version=$(jq -r .version "$f")
+            if ! printf '%s' "$version" | grep -qE '^[A-Za-z0-9._]+$'; then
+              echo "::error file=$f::version \"$version\" may use only letters, digits, '.' and '_': it is part of the image tag <slug>-<version>-<commit>, whose parts are separated by '-'"
+              status=1
+            fi
+            if [ $(( ${#slug} + ${#version} + 14 )) -gt 128 ]; then
+              echo "::error file=$f::$slug-$version-<commit> is longer than the 128 characters a tag may be"
+              status=1
+            fi
+          done
+          exit $status
       # Only what this push changed is built, so an unchanged wrapper keeps
       # the tags it has. A change to what every wrapper builds from (the
       # vendored protocol, go.mod, this workflow), a manual run, or a push
@@ -92,6 +124,7 @@ jobs:
         run: |
           echo "version=$(jq -r .version '${{ matrix.wrapper }}/wrapper.json')" >> "$GITHUB_OUTPUT"
           echo "commit=$(git rev-parse --short=12 HEAD)" >> "$GITHUB_OUTPUT"
+          echo "tag=${{ matrix.wrapper }}-$(jq -r .version '${{ matrix.wrapper }}/wrapper.json')-$(git rev-parse --short=12 HEAD)" >> "$GITHUB_OUTPUT"
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -105,14 +138,33 @@ jobs:
           file: ${{ matrix.wrapper }}/Dockerfile
           platforms: linux/amd64
           push: true
-          tags: ghcr.io/mendelbuild/${{ matrix.wrapper }}:${{ steps.describe.outputs.version }}-${{ steps.describe.outputs.commit }}
+          tags: ghcr.io/mendelbuild/wrappers-staging:${{ steps.describe.outputs.tag }}
       - name: Say what to register
         run: |
           {
             echo "### ${{ matrix.wrapper }} ${{ steps.describe.outputs.version }} (built at ${{ steps.describe.outputs.commit }})"
             echo
+            echo "Published as \`ghcr.io/mendelbuild/wrappers-staging:${{ steps.describe.outputs.tag }}\`. On staging:"
+            echo
             echo '```'
             echo "mendel-tool tools register -file ${{ matrix.wrapper }}/wrapper.json \\"
-            echo "  -image ghcr.io/mendelbuild/${{ matrix.wrapper }}@${{ steps.build.outputs.digest }}"
+            echo "  -image ghcr.io/mendelbuild/wrappers-staging@${{ steps.build.outputs.digest }}"
             echo '```'
+            echo
+            echo "Once staging has run it, promote it (Actions, promote, Run workflow) with"
+            echo "tag \`${{ steps.describe.outputs.tag }}\` and digest \`${{ steps.build.outputs.digest }}\`,"
+            echo "and register the same digest from ghcr.io/mendelbuild/wrappers-prod on production."
           } >> "$GITHUB_STEP_SUMMARY"
+      # Asked with no credentials, as a project's cluster would ask, and after
+      # the summary, so the digest is printed either way. GitHub created the
+      # package private if this was its first push; making it public is a
+      # one-time change in its settings.
+      - name: The image can be pulled anonymously
+        run: |
+          token=$(curl -fsS "https://ghcr.io/token?scope=repository:mendelbuild/wrappers-staging:pull" | jq -r .token) || true
+          if ! curl -fsSI -H "Authorization: Bearer $token" \
+              -H "Accept: application/vnd.oci.image.index.v1+json, application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.docker.distribution.manifest.v2+json" \
+              "https://ghcr.io/v2/mendelbuild/wrappers-staging/manifests/${{ steps.build.outputs.digest }}" >/dev/null; then
+            echo "::error::ghcr.io/mendelbuild/wrappers-staging cannot be pulled anonymously, so no project's cluster could run this wrapper. Make the package public, once: https://github.com/orgs/mendelbuild/packages/container/wrappers-staging/settings (Danger Zone, Change visibility, Public)."
+            exit 1
+          fi

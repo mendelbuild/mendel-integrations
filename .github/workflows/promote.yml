@@ -1,0 +1,104 @@
+# Promotes one wrapper image from staging's package to production's:
+#
+#   ghcr.io/mendelbuild/wrappers-staging@<digest>
+#     -> ghcr.io/mendelbuild/wrappers-prod:<slug>-<version>-<commit>
+#
+# The copy is by digest and keeps it, so production registers exactly the
+# bytes staging tested, and the step checks that it did. Nothing is rebuilt:
+# a rebuild of the same commit is not guaranteed the same bytes.
+#
+# Run by hand, from Actions, once staging has run the wrapper, with the tag and
+# digest images.yml printed. It refuses a tag in staging's package that names
+# another digest, and a tag in production's package that already names another
+# one, so a production tag never moves either. Promoting a second time is a
+# no-op.
+#
+# This workflow and images.yml are the only writers to the wrapper packages,
+# and nothing published is ever deleted (see images.yml).
+name: promote
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "The wrapper's tag, <slug>-<version>-<commit>, as images.yml printed it"
+        required: true
+      digest:
+        description: "The digest staging registered, sha256:<64 hex>"
+        required: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ inputs.tag }}
+      DIGEST: ${{ inputs.digest }}
+      STAGING: ghcr.io/mendelbuild/wrappers-staging
+      PROD: ghcr.io/mendelbuild/wrappers-prod
+    steps:
+      - name: The inputs are a wrapper's tag and a digest
+        run: |
+          if ! printf '%s' "$TAG" | grep -qE '^[a-z][a-z0-9-]*-[A-Za-z0-9._]+-[0-9a-f]{12}$'; then
+            echo "::error::\"$TAG\" is not a wrapper's tag, <slug>-<version>-<commit>."
+            exit 1
+          fi
+          if ! printf '%s' "$DIGEST" | grep -qE '^sha256:[0-9a-f]{64}$'; then
+            echo "::error::\"$DIGEST\" is not a digest, sha256:<64 hex>."
+            exit 1
+          fi
+      # Installs crane and logs it in to ghcr.io with this run's token.
+      - uses: imjasonh/setup-crane@v0.7
+      - name: Staging's tag names this digest
+        run: |
+          staged=$(crane digest "$STAGING:$TAG")
+          if [ "$staged" != "$DIGEST" ]; then
+            echo "::error::$STAGING:$TAG is $staged, not $DIGEST. Promote the digest staging registered, under the tag images.yml published it with."
+            exit 1
+          fi
+      - id: copy
+        name: Copy by digest
+        run: |
+          existing=$(crane digest "$PROD:$TAG" 2>/dev/null || true)
+          if [ "$existing" = "$DIGEST" ]; then
+            echo "$PROD:$TAG is already $DIGEST; nothing to do."
+          elif [ -n "$existing" ]; then
+            echo "::error::$PROD:$TAG already names $existing. A tag never moves."
+            exit 1
+          else
+            crane copy "$STAGING@$DIGEST" "$PROD:$TAG"
+          fi
+          promoted=$(crane digest "$PROD:$TAG")
+          if [ "$promoted" != "$DIGEST" ]; then
+            echo "::error::$PROD:$TAG came out as $promoted, not $DIGEST: production would not run the bytes staging tested."
+            exit 1
+          fi
+      - name: Say what to register
+        run: |
+          slug=${TAG%-*}      # the commit off the right,
+          slug=${slug%-*}     # then the version
+          {
+            echo "### $TAG promoted"
+            echo
+            echo "On production:"
+            echo
+            echo '```'
+            echo "mendel-tool tools register -file $slug/wrapper.json \\"
+            echo "  -image $PROD@$DIGEST"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      # As images.yml does for staging's package: asked with no credentials,
+      # after the summary. GitHub created the package private if this was its
+      # first promotion; making it public is a one-time change in its settings.
+      - name: The image can be pulled anonymously
+        run: |
+          token=$(curl -fsS "https://ghcr.io/token?scope=repository:mendelbuild/wrappers-prod:pull" | jq -r .token) || true
+          if ! curl -fsSI -H "Authorization: Bearer $token" \
+              -H "Accept: application/vnd.oci.image.index.v1+json, application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.docker.distribution.manifest.v2+json" \
+              "https://ghcr.io/v2/mendelbuild/wrappers-prod/manifests/$DIGEST" >/dev/null; then
+            echo "::error::$PROD cannot be pulled anonymously, so no project's cluster could run this wrapper. Make the package public, once: https://github.com/orgs/mendelbuild/packages/container/wrappers-prod/settings (Danger Zone, Change visibility, Public)."
+            exit 1
+          fi

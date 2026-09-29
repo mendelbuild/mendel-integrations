@@ -220,8 +220,9 @@ before every read:
    cluster the pin must be a **registry digest**, `name@sha256:<64 hex>`,
    **on a public registry**: a project's cluster can pull from its own
    registry and from a public one, and nothing else. This repository's
-   workflow publishes each changed wrapper on push to `main` (see
-   "Publishing") and prints the digest to register. A local
+   workflow publishes each changed wrapper to staging's package on push to
+   `main`, and a second copies it by digest into production's (see
+   "Publishing"); each prints the digest to register. A local
    image's id (`sha256:<64 hex>`, from `docker image inspect --format
    '{{.Id}}'`) is still accepted, for a Mendel admin's own verification, and
    the condition says why a project cannot run it. Retiring stops a version
@@ -249,9 +250,10 @@ before a local id, a reviewed one before an unreviewed one, then the newest.
 
 ```bash
 # Merged to main at commit 8cf9e5f0a1b2, the workflow publishes
-# ghcr.io/mendelbuild/acme-analytics:1.0-8cf9e5f0a1b2 and prints its digest.
+# ghcr.io/mendelbuild/wrappers-staging:acme-analytics-1.0-8cf9e5f0a1b2 and
+# prints its digest. On staging:
 mendel-tool tools register -file wrapper.json \
-  -image ghcr.io/mendelbuild/acme-analytics@sha256:...
+  -image ghcr.io/mendelbuild/wrappers-staging@sha256:...
 ACME_ANALYTICS_KEY=... mendel-tool tools verify acme-analytics 1.0 -account venue.example
 mendel-tool tools retire acme-analytics 1.0 -reason "sent a key to the wrong host"
 ```
@@ -318,35 +320,60 @@ tool is registered.
 
 ## Publishing
 
+Every wrapper's image goes to one of two packages on ghcr.io, one per Mendel
+environment, and its tag says which wrapper it is:
+
+```
+ghcr.io/mendelbuild/wrappers-staging:<slug>-<version>-<commit>
+ghcr.io/mendelbuild/wrappers-prod:<slug>-<version>-<commit>
+```
+
 On every push to `main`, `.github/workflows/images.yml` builds each wrapper
 whose directory changed (all of them when the vendored protocol, `go.mod` or
-the workflow changed) and publishes it as
+the workflow changed), publishes it to `wrappers-staging`, and prints the
+`mendel-tool tools register` line with the digest in the run's summary.
 
-```
-ghcr.io/mendelbuild/<directory>:<version>-<commit>
-```
+Once staging has run it, `.github/workflows/promote.yml`, run by hand from
+Actions with the tag and digest `images.yml` printed, copies that digest into
+`wrappers-prod` under the same tag. The copy keeps the digest, and the workflow
+checks that it did, so production registers exactly the bytes staging tested;
+nothing is rebuilt. It refuses a staging tag that names another digest and a
+production tag that already names one, and promoting twice is a no-op.
 
-then prints the `mendel-tool tools register` line with the digest in the run's
-summary. Nothing checks for collisions, because none can happen: a directory
-must be named for the slug its `wrapper.json` declares (the workflow fails
-otherwise), so two wrappers cannot share a package; and a commit is built once,
-so a tag never moves. A tag is only a label for finding a digest. What Mendel
-runs is the digest, and each installation's registry refuses a second digest
-for a version it already holds, so a wrapper changed without a new `version`
-publishes fine and is refused at registration, saying why.
+**Why two packages rather than one per wrapper.** GitHub creates every package
+private and offers no API to make one public, and a private package can be
+registered but cannot be pulled by any project's cluster. A package per
+wrapper would need a person to click through its settings for every wrapper
+added, so the set of packages is fixed and each is made public once: one per
+kind of image a project's cluster pulls, per environment. There are four:
+these two, and Mendel's `wrapper-shim-staging` and `wrapper-shim-prod`, pushed
+by its `deploy/gke-deploy.sh`. A new kind of image adds a package; a new
+wrapper never does. Both workflows check that what they wrote can be pulled
+with no credentials, and name the settings page to fix it if not.
 
-Three rules keep the shared pool trustworthy:
+Nothing checks for collisions, because none can happen. A directory must be
+named for the slug its `wrapper.json` declares (the workflow fails otherwise),
+so two wrappers cannot share a slug; the commit is the last part of a tag and
+always twelve hex digits; and a version may not contain a `-` (the workflow
+fails on one), so read from the right a tag splits into slug, version and
+commit exactly one way. A commit is built once, so a tag never moves. A tag is
+only a label for finding a digest. What Mendel runs is the digest, and each
+installation's registry refuses a second digest for a version it already
+holds, so a wrapper changed without a new `version` publishes fine and is
+refused at registration, saying why.
 
-- **The workflow is the only writer** of a wrapper's package. Never push to
-  one by hand: a tag on ghcr.io can be pushed over by anyone with write
-  access, so this rule is what keeps it naming one image. (The one other
-  writer under `ghcr.io/mendelbuild` is Mendel's own `deploy/gke-deploy.sh`,
-  which publishes `mendel-wrapper-shim` tagged by Mendel's commit.)
-- **Nothing published is ever deleted.** Staging and production are separate
-  Mendel installations that register the same digests; an image that looks
-  unused from one may be what the other runs. Promotion from staging to
-  production is registering the same digest, so production runs the bytes
-  staging tested.
-- **A new package is private until someone makes it public**, once, in its
-  settings on GitHub (Danger Zone, Change visibility). A private package can
-  be registered and cannot be pulled by any project's cluster.
+Three rules keep the packages trustworthy:
+
+- **This repository's workflows are the only writers** of the wrapper
+  packages: `images.yml` of `wrappers-staging`, `promote.yml` of
+  `wrappers-prod`. Never push to either by hand: a tag on ghcr.io can be
+  pushed over by anyone with write access, so this rule is what keeps it
+  naming one image. (The other writer under `ghcr.io/mendelbuild` is Mendel's
+  own `deploy/gke-deploy.sh`, which publishes the shim to its two packages,
+  tagged by Mendel's commit.)
+- **Nothing published is ever deleted.** An image that looks unused may be
+  what an installation runs, and every production digest is also a staging
+  one, so a staging image that looks superseded can be what production pins.
+- **Production runs only what staging published.** It registers from
+  `wrappers-prod`, and nothing reaches `wrappers-prod` but a copy of a staging
+  digest.
