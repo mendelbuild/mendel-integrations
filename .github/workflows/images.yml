@@ -129,8 +129,33 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      # A tag already published is never pushed again. Re-running this job, or
+      # a run whose push landed before a later step failed, would otherwise
+      # rebuild the same commit, which is not byte-identical, and move the tag
+      # off the digest an installation may already have registered; promote.yml
+      # would then refuse that digest. So a tag that exists is reused as it is,
+      # and a bad build is replaced by a new commit, never by a re-run.
+      - uses: imjasonh/setup-crane@v0.7
+      - id: existing
+        env:
+          IMAGE: ghcr.io/mendelbuild/wrappers-staging:${{ steps.describe.outputs.tag }}
+        run: |
+          if out=$(crane digest "$IMAGE" 2>&1); then
+            echo "$IMAGE is already published as $out; not pushing it again."
+            echo "digest=$out" >> "$GITHUB_OUTPUT"
+          # A missing tag is MANIFEST_UNKNOWN; a package not created yet can
+          # answer DENIED. Either way it is absent, and a real failure to
+          # authenticate fails the push below instead.
+          elif printf '%s' "$out" | grep -qE 'MANIFEST_UNKNOWN|NAME_UNKNOWN|DENIED|404'; then
+            echo "$IMAGE is not published yet."
+          else
+            echo "::error::Could not tell whether $IMAGE is published: $out"
+            exit 1
+          fi
       - uses: docker/setup-buildx-action@v3
+        if: ${{ steps.existing.outputs.digest == '' }}
       - id: build
+        if: ${{ steps.existing.outputs.digest == '' }}
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -138,6 +163,8 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ghcr.io/mendelbuild/wrappers-staging:${{ steps.describe.outputs.tag }}
+      - id: published
+        run: echo "digest=${{ steps.existing.outputs.digest || steps.build.outputs.digest }}" >> "$GITHUB_OUTPUT"
       - name: Say what to register
         run: |
           {
@@ -147,11 +174,11 @@ jobs:
             echo
             echo '```'
             echo "mendel-tool tools register -file ${{ matrix.wrapper }}/wrapper.json \\"
-            echo "  -image ghcr.io/mendelbuild/wrappers-staging@${{ steps.build.outputs.digest }}"
+            echo "  -image ghcr.io/mendelbuild/wrappers-staging@${{ steps.published.outputs.digest }}"
             echo '```'
             echo
             echo "Once staging has run it, promote it (Actions, promote, Run workflow) with"
-            echo "tag \`${{ steps.describe.outputs.tag }}\` and digest \`${{ steps.build.outputs.digest }}\`,"
+            echo "tag \`${{ steps.describe.outputs.tag }}\` and digest \`${{ steps.published.outputs.digest }}\`,"
             echo "and register the same digest from ghcr.io/mendelbuild/wrappers-prod on production."
           } >> "$GITHUB_STEP_SUMMARY"
       # Asked with no credentials, as a project's cluster would ask, and after
@@ -163,7 +190,7 @@ jobs:
           token=$(curl -fsS "https://ghcr.io/token?scope=repository:mendelbuild/wrappers-staging:pull" | jq -r .token) || true
           if ! curl -fsSI -H "Authorization: Bearer $token" \
               -H "Accept: application/vnd.oci.image.index.v1+json, application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.docker.distribution.manifest.v2+json" \
-              "https://ghcr.io/v2/mendelbuild/wrappers-staging/manifests/${{ steps.build.outputs.digest }}" >/dev/null; then
+              "https://ghcr.io/v2/mendelbuild/wrappers-staging/manifests/${{ steps.published.outputs.digest }}" >/dev/null; then
             echo "::error::ghcr.io/mendelbuild/wrappers-staging cannot be pulled anonymously, so no project's cluster could run this wrapper. Make the package public, once: https://github.com/orgs/mendelbuild/packages/container/wrappers-staging/settings (Danger Zone, Change visibility, Public)."
             exit 1
           fi

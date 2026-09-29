@@ -359,7 +359,9 @@ named for the slug its `wrapper.json` declares (the workflow fails otherwise),
 so two wrappers cannot share a slug; the commit is the last part of a tag and
 always twelve hex digits; and a version may not contain a `-` (the workflow
 fails on one), so read from the right a tag splits into slug, version and
-commit exactly one way. A commit is built once, so a tag never moves. A tag is
+commit exactly one way. A tag already published is never pushed again, so
+re-running the workflow reuses it rather than moving it to a rebuild, which
+would not be byte-identical; a bad build is replaced by a new commit. A tag is
 only a label for finding a digest. What Mendel runs is the digest, and each
 installation's registry refuses a second digest for a version it already
 holds, so a wrapper changed without a new `version` publishes fine and is
