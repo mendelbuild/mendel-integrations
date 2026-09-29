@@ -1,0 +1,515 @@
+Fetched 2026-09-29 from https://tavily.com/terms
+
+Terms of Service
+
+Last updated: 
+May 4, 2026
+
+Tavily Platform Terms of Service
+
+These PlatformTerms of Service (“
+Agreement
+”) constitute a legally binding agreement between 
+AlphaAI Technologies Inc. dba Tavily
+(“
+Tavily
+”, “
+Company
+”, “
+we
+”, “
+us
+”, or “
+our
+”) and you, whether as an individual, company, or other legal entity, as identified by the information you provided when creating your Account or as specified in an executed Order Form (as defined below) that references this Agreement (“
+you
+”, “
+your
+”, or “
+Customer
+”), governing your access to and use of the Services (as defined below). Both Tavily and you are also referred collectively as the “
+Parties
+” and each as a “
+Party
+”.
+
+PLEASE READ THIS AGREEMENT CAREFULLY. BY CLICKING “I ACCEPT”, “I AGREE”, “CONTINUE”, “REGISTER”, “NEXT”, OR ANY SIMILAR BUTTON, BY CHECKING A BOX, BY EXECUTING AN ORDER FORM THAT EXPRESSLY REFERENCES THIS AGREEMENT, BY CREATING AN ACCOUNT, OR BY OTHERWISE ACCESSING OR USING THE SERVICES, YOU ACKNOWLEDGE AND AGREE THAT YOU HAVE READ, UNDERSTOOD, AND AGREE TO BE BOUND BY THIS AGREEMENT. IF YOU DO NOT AGREE TO ALL THE TERMS AND CONDITIONS OF THIS AGREEMENT, YOU MAY NOT ACCESS OR USE THE SERVICES.
+
+This Agreement applies solely to your access to and use of the Services (as defined below). This Agreement does not apply to other products or services offered by Tavily, including but not limited to the use of our 
+marketing website
+ and its subdomains which do not include our Services (“
+Website
+”), support services, or any other offerings, which may be subject to separate agreements or terms of use. For clarity, your use of or access to our Website is governed by the following website 
+terms of use
+. For the avoidance of doubt, if you have executed a written agreement with the Company in respect of the Services, such written agreement will supersede this Agreement and shall prevail (unless the written agreement references this Agreement).
+
+By accepting this Agreement, you represent and warrant that: (a) You are at least eighteen (18) years of age or have reached the age of majority in your jurisdiction, whichever is greater; (b) You have the legal capacity and authority to enter into this Agreement; (c) If you are accepting this Agreement on behalf of a company, organization, or other legal entity, you are authorized to accept and have the authority to bind such entity to this Agreement, such entity agrees to be bound by this Agreement, both you and such entity shall be jointly and severally liable for any breach of this Agreement and any obligations arising hereunder, and all references to “you” “your”, or “Customer”, in this Agreement shall refer to such entity as well; (d) Your acceptance of this Agreement and use of the Services will not violate any applicable law, regulation, or agreement to which you are subject; and (e) All information you provide in connection with this Agreement and your use of the Services is accurate and complete.
+
+If Customer has purchased the Subscription granted hereunder from a partner, marketplace, reseller or distributor authorized by Tavily (“
+Partner
+”), to the extent there is any conflict between this Agreement and the agreement entered into between Customer and the respective Partner, including any Partner’s purchase order or order form (collectively, “
+Partner Order Form
+”), then, as between Customer and Tavily, this Agreement shall prevail. Any rights granted to Customer in such Partner Order Form which are not contained in this Agreement, apply only in connection with such Partner. In that case, Customer may seek redress or realization or enforcement of such rights solely with such Partner and not Tavily.
+
+BY AGREEING TO THIS AGREEMENT, AND EXCEPT FOR (A) CERTAIN TYPES OF DISPUTES DESCRIBED IN SECTION 16, (B) WHERE YOU EXERCISE YOUR RIGHT TO OPT OUT OF ARBITRATION AS DESCRIBED IN SECTION 16, OR (C) TO THE EXTENT PROHIBITED BY APPLICABLE LAW, YOU AGREE THAT DISPUTES BETWEEN YOU AND TAVILY WILL BE RESOLVED THROUGH BINDING INDIVIDUAL ARBITRATION AND YOU ARE WAIVING YOUR RIGHT TO A TRIAL BY JURY OR TO PARTICIPATE AS A PLAINTIFF OR CLASS MEMBER IN ANY PURPORTED CLASS ACTION OR REPRESENTATIVE PROCEEDING.
+
+Please note:
+
+ Tavily may make available to Customer an Agent Key that enables automated interaction between Customer’s agents and the Services without requiring separate registration or the creation of an Account (as defined below) (the “
+Agent Key
+”). Customer acknowledges and agrees that any access to or use of the Services through an Agent Key by Customer, its agents, or any person or system acting on Customer’s behalf shall constitute Customer’s access to and use of the Services and shall remain subject to, and governed by, this Agreement. Customer shall be solely responsible for all acts and omissions undertaken through any Agent Key issued to or used by Customer, and for maintaining the security and confidentiality of such Agent Key.
+
+The terms governing your Subscription (as defined below) plan for the Services will be defined and displayed on: (a) our Website (under the following page: 
+https://www.tavily.com/#pricing
+) prior to your purchase of any Subscription, and these terms must be accepted by you during the Subscription process, or alternatively, (b) these terms may be established through a formal order form that is executed by both Tavily and you, which specifically references and incorporates this Agreement. Whether you subscribe through our website or through a separately executed agreement, the commercial terms, pricing, and specific details of your chosen Subscription plan, along with any terms set forth in a formal order form, are hereby incorporated into this Agreement by reference and, as applicable, shall be referred to as the “
+Order Form
+” throughout this Agreement. If any conflict or inconsistency arises between this Agreement and any Order Form, the provisions of this Agreement shall prevail and govern unless the Order Form clearly states that a particular term will take precedence.
+
+1. Defined Terms.
+
+1.1. “
+AI Tools
+” means artificial intelligence models, tools, large language models, and other artificial intelligence-driven software solutions.
+
+1.2. “
+Customer Applications
+” means one or more Customer software applications, platforms and/or services (which may include without limitation, AI Tools), including third party platforms, services and/or applications, in each case which are supported by the Services and that Customer interfaces with the Services, including via any Tavily API.
+
+1.3.“
+Customer Input
+” means any and all text, materials, information, data, queries and other input submitted or provided by Customer, Users, Customer Application and/or an end-user of the Customer Application, to the Services, or otherwise to Tavily, in order to provide the Services.
+
+1.4. “
+Fees
+” means the fees payable hereunder, as set forth in the Order Form, and as further defined under Section 
+Error! Reference source not found.
+ below.
+
+1.5. “
+Order Form
+” shall have the meaning ascribed to it in the preamble.
+
+1.6.“
+Output
+” means the outputs or results delivered or made available to Customer through the Services, resulting from Customer Input’s processing via the Services, including the generated text, information, links or other materials included therein.
+
+1.7 “
+Services
+” means the Tavily online search engine designed to deliver real-time results, including a Tavily web application provided on a SaaS basis and any associated application programming interface(s) and/or Agent Key (collectively, “
+Tavily API(s)
+”), including as provided under the following link: 
+https://app.tavily.com
+, AI Functionality, AI Tools, software code, dashboard, agent, algorithms, utility, tools, analytics capabilities, documentation, any services provided by the Services, and any other services provided by Tavily under this Agreement. For clarity, theterm “
+Services
+” does not include Output.
+
+2. Order Form and Right to Use the Services
+
+Subject to the terms and conditions of this Agreement, the payment of Fees and any applicable limitations set forth in the Order Form, Tavily hereby grants Customer a non-exclusive, revocable (in accordance with the terms of this Agreement), non-transferable, and non-sublicensable right, during the Term, to install, access, and use the Tavily APIs and to remotely access and use the Services, including integration of the Services with Customer Applications via the Tavily API, solely for Customer’s internal business purposes and in accordance with the Services’ documentation. The Customer may not exceed the number of API calls (or other usage limitations, if any) expressly specified in the Order Form, and any overage will be subject to additional Fees as outlined in the Order Form. For the avoidance of doubt, the Tavily API, including any Agent Key, is intended solely for Customer’s use, may not be transferred, assigned, shared, or otherwise made available to any third party, and may not be used by any third party without Tavily’s prior written consent.
+
+3. Customer Responsibilities
+3.1	Account. 
+
+Customer and its users of the Services (each, a “
+User
+”)may be required to create an account(an “
+Account
+”)to access and use the Services. Unless otherwise specifically specified underthe Order Form, (X) each Order Form provides the Customer and its Users with access to a single Account only, and (Y) any additional Accounts may require the issuance of a separate Order Form and may incur additional charges. Customer (i) may not, and will ensure that Users do not, share Account information with any third party, (ii) will keep, and ensure that all Users keep, each Account and all Account information and credentials (including API security keys and any Agent Key) secure, and (iii) will only use, and will ensure that Users only use, their Account to access the Services. Customer is solely responsible for all activity that occurs under Customer’s Account and is solely responsible for any and all acts and omissions of Users. Any act or omission of a User will, for purposes of this Agreement, be deemed an act or omission of Customer. You shall ensure that all information provided during the Account registration process or otherwise through the Account is complete, correct and accurate. We reserve the right to suspend or terminate your Account if any information provided during the registration process or thereafter proves to be inaccurate, not current or incomplete, and you will be solely responsible for any damage or consequence that may arise from the use of false, incorrect or incomplete information in connection with an Account. For the avoidance of doubt, if Customer accesses or uses the Services through an Agent Key without separately registering an Account or providing registration details, such access or use will automatically constitute the creation of an Account under this Agreement, and all use of the Services through that Agent Key will be subject to this Agreement, including Section 3.1, with necessary changes. Without limiting the foregoing, Tavily may impose, modify, suspend, or enforce specific restrictions, requirements, or technical parameters applicable to Customer’s access to and use of the Services through the Agent Key, including with respect to usage caps, rate limits, feature availability, permitted use cases, geographic or environment-based access, authentication requirements, security controls, and the manner or method of access, and Customer shall comply with all such restrictions and requirements as may be communicated or made available by Tavily from time to time.
+
+3.2	General Use Restrictions. 
+
+The Services are provided solely for Customer’s internal business purposes, including for integration with Customer Applications. Customer will not, in whole or in part: (i) modify, copy, disclose, alter, translate or create derivative works of the Services; (ii) license, sublicense, resell, distribute, lease, rent, lend, transfer, assign or otherwise dispose of the Services (provided, that integration of the Services in Customer Applications in accordance with this Agreement will not constitute a violation of this subsection); (iii) decompile, disassemble, decode, translate, or reverse engineer the Services or otherwise attempt to learn the source code, structure, algorithms, or internal ideas underlying the Services or reduce the Services by any other means to a human-perceivable form; (iv) frame or mirror any part of the Services (provided, that integration of the Services in Customer Applications in accordance with this Agreement will not constitute a violation of this subsection); (v) access the Services in order to build a competitive product or service; (vi) compete with Tavily or its business; (vii) overburden the Services (including, without limitation, making excess Tavily API calls specified under the Order Form) or interfere with or disrupt the integrity or performance of the Services or input, upload, transmit, or otherwise provide any harmful code to or through the Services; (viii) use any data mining, robots, or similar data gathering or extraction methods through the Services (provided, that reasonable use of Tavily APIs in accordance with this Agreement will not constitute a violation of this subsection); (ix) attempt to gain unauthorized access to the Services or its related systems or networks or exceed any Customer limitations or other restrictions set forth on the Order Form, the Services or Partner Order Form (if purchased via Partner as specified herein), with respect to the Services (including, without limitation, restrictions with respect to Tavily API calls); (x) disclose to any third party any performance information or analysis relating to the Services; (xi) remove, alter, or obscure any proprietary notices in or on the Services; (xii) combine or integrate the Services with any software, technology, services, or materials not authorized by Tavily (provided, that integration of the Services in Customer Applications in accordance with this Agreement will not constitute a violation of this subsection); (xiii) attempt to cloak or conceal Customer’s identity or the identity of any Customer Applications when accessing the Services; (xiv) use the Services in connection with any products, services, or materials that constitute, promote, or are used primarily for the purpose of dealing in spyware, adware, or other malicious programs or code, counterfeit goods, items subject to sanctions or embargo, unsolicited marketing proposals, hate materials, hacking, surveillance, interception, or descrambling equipment, libelous, defamatory, obscene, pornographic, abusive, or otherwise offensive content, stolen products, and items used for theft, hazardous materials, or any illegal activities; (xv) use the Services or the Output in any manner that is dangerous, high-risk or violates applicable law; (xvi) use the Services or the Output to make automated decisions without human oversight that have a significant adverse impact on individual rights in high-risk areas such as employment, healthcare, finance, legal, housing, insurance or social benefits; and/or (xvii) attempt any of the foregoing or cause or permit any individual or entity to do any of the foregoing.
+
+3.3	Updates. 
+
+Tavily may, at its sole discretion, provide Customer with updates to the Services that Tavily generally makes available to its other customers at no additional charge during the Term, provided that Tavily shall not be obligated to provide such upgrades or additional features for which it charges additional fees from its clients and such will be subject to the execution of an additional Order Form and payment of additional fees. For the avoidance of doubt, the provisions of this Agreement shall apply to any such upgrade, new version and/or additional features of the Services. Tavily may change the Services’ layout, form, and design and the availability of certain content, functions, or features from time to time and without notice.
+
+3.4	Customer Applications and Customer Input. 
+
+As between Customer and Tavily, the Customer is solely responsible and liable for the Customer Applications, including their lawful, appropriate and ethical use in connection with the Services. Without derogating from the generality of the foregoing, the Customer is solely responsible for: (i) posting any privacy notices and obtaining any consents, as required by applicable law, from the Customer Applications’ end users and other relevant data subjects whose personal data may be included in the Customer Input; and (ii) all acts and omissions of Customer’s end users in connection with Customer Applications and their use of the Services (as applicable). Additionally, the Customer is solely responsible and liable for the Customer Input uploaded to the Services or otherwise provided to Tavily, including its legality, accuracy, quality, security and appropriateness. Tavily is not responsible for performing, and is not liable for failure to perform, any back-up of any Customer Input.
+
+3.5	End Users. 
+
+If the Customer Application involves providing access to the Services by end users who are third parties outside of Customer's organization (i.e., end users who are not Customer's employees, contractors, or other affiliated personnel), or use of the Services by such third parties, Customer shall ensure that: (i) its terms of use, privacy policy, or other governing agreements with such third-party end users do not impose any additional obligations, warranties, liabilities, or responsibilities on Tavily beyond those expressly set forth in this Agreement; (ii) Customer's agreements with such users do not imply any agency, partnership, or joint venture relationship between Customer and Tavily; and (iii) any claims, disputes, or issues arising from such third-party users' use of the Customer Application and the Services are handled exclusively between Customer and such end users.
+
+3.6	Beta. 
+
+From time to time, Tavily may make beta services available at no charge as part of the Service (“Beta Services”). The Beta Services are made available “AS IS” and the Company shall have no liability for any harm or damage arising out of or in connection with the Beta Services. The Customer may choose to try such Beta Services at its sole discretion. Tavily may discontinue Beta Services at any time in its sole discretion and may never make them generally available.
+
+3.7	Additional Services. 
+
+Except as expressly set forth in this Agreement and/or the applicable Order Form, Tavily is under no obligation to provide support, training, technical support, consulting, or other professional services. Any additional support services, training, technical support, consulting, or other professional services not specifically included in your Subscription plan may be available separately and subject to additional fee
+
+3.8	Acceptable Use Policy. 
+
+Customer shall comply with, and shall ensure that all Users, end users of Customer Applications, and any third parties accessing the Service, and/or accessing or using the Output, comply with Tavily's 
+Acceptable Use Policy
+ (as may be updated by Tavily from time to time). Any violation of the Acceptable Use Policy by Customer or any such third party shall constitute a material breach of this Agreement.
+
+4. Fees
+
+4.1	Fees and Payment Terms. 
+
+Fees and Payment Terms
+. Use of the Services requires purchase of a subscription to the Services in accordance with available plans and payment of subscription fees as specified in the Order Form, and as selected by you during the subscription purchase process, or as set forth in an Order Form executed between the parties that expressly references this Agreement (the “
+Subscription
+” and “
+Fees
+”, respectively). You acknowledge that different subscription tiers may offer varying features, usage limits, user seat limitations, and pricing structures as detailed on our pricing page. Except in the event the Subscription is purchased from a Partner as specified below, Customer shall pay the Fees to Tavily. Unless otherwise specifically specified underthe Order Form, (a) any additional Accounts than one per Customer, may require the issuance of a separate Order Form and may incur additional charges; and (b) if Customer uses more than 30,000,000 (thirty million) credits in any 12-month period, additional charges and terms may apply.
+
+4.2	Payment Responsibility and Methods.
+
+It is your sole responsibility to ensure that Tavily has access to and maintains current and valid payment method information for your account, including for all consolidated or linked accounts under your organization. You must ensure timely payment of all Fees and related charges as they become due.
+
+4.3	Billing Cycles and Automatic Renewal. 
+
+Subject to the terms of your Subscription plan and the Order Form and unless specified otherwise under the Order Form: (a) Fees are billed in advance on a recurring basis according to your selected billing cycle (monthly, annually, or other period as specified in your chosen Subscription plan), commencing from your initial Services/Account registration or Subscription activation date; (b) Usage-based fees will be charged on a recurring basis at the end of each billing period, and where applicable, in addition to base subscription Fees (all of these constitute also the “
+Fees
+”); and (c) your Subscription will automatically renew at the end of each billing period based on your selected renewal cycle unless you cancel prior to 24 hours before the renewal date and you hereby consent to such renewal. You may terminate your Subscription at any time by providing written notice to us; however, termination will take effect at the end of your current Subscription term and you are obligated to pay all Fee for the remainder of that term until the next billing cycle.
+
+4.4	Cryptocurrency Payments. 
+
+Tavily may, in its sole discretion, accept payment of Fees in cryptocurrency or other digital assets approved by Tavily (“
+Crypto Payments
+”), but Tavily is not obligated to do so and may refuse or discontinue accepting Crypto Payments at any time. This Sub-section only apply to the extent Tavily accept Crypto Payment. If Tavily accepts a Crypto Payment, Customer must pay using the wallet address, payment processor, and other instructions designated by Tavily. If Tavily accepts a Crypto Payment, a payment obligation is satisfied only when Tavily or its designated payment processor actually receives the required amount with any required settlement finality or blockchain confirmations. Customer is responsible for all fees and transaction costs associated with the Crypto Payment, and remains liable for any shortfall caused by price fluctuation, transfer delays, transaction costs, underpayment, or failed or incorrect transfers. Tavily may determine the conversion rate between the cryptocurrency and U.S. Dollars using the pricing source and time of determination it or its payment processor selects. Customer acknowledges that digital asset values are volatile, and Tavily is not responsible for any change in value before, during, or after transfer. Unless Tavily agrees otherwise in writing, any refund, credit, or rebate (to the extent Tavily within its sole discretion decide to provide) relating to a Crypto Payment, may be made in U.S. Dollars in the amount recorded by Tavily, or in another form determined by Tavily, subject to applicable law. Customer is solely responsible for determining, reporting, and paying any tax consequences arising from its use of cryptocurrency to make payments under this Agreement. As a condition to making any Crypto Payment, Customer represents and warrants that it lawfully owns or controls the wallet and digital assets used, is authorized to use them, and that the Crypto Payment complies with applicable law, including sanctions, anti-money laundering, counter-terrorist financing, and tax laws. Customer further represents that the digital assets are not derived from or connected to unlawful, fraudulent, or sanctioned activity, and will provide information reasonably requested by Tavily or its payment processor to verify the transaction and compliance. Tavily may reject, suspend, or require an alternative payment method for any Crypto Payment that it reasonably believes creates legal, regulatory, financial, or operational risk.
+
+4.5	Additional Disclosures under the US.
+
+4.5.1
+ IMPORTANT
+: Unless otherwise specified under the Order Form, by subscribing to our Services, you are entering into an automatically renewing Subscription that will continue until you cancel.4.5.2	Your Subscription will automatically renew at the end of each billing period (monthly/annually as selected) and your designated payment method will be charged the then-current Fee, plus any applicable taxes, unless you cancel your Subscription before 24 hours from the renewal date. After any Free Trial period ends (if any), you will be charged the full Fees.
+4.5.3	You will be charged the Fees set forth in your selected Subscription plan (as set forth in the Order Form) until you cancel your Subscription. All charges will continue on a recurring basis unless you take affirmative action to cancel as described below. Please note that usage-based Fees incurred prior to termination will be charged upon or promptly after the termination date.
+4.5.4	To avoid being charged for the next billing period, you must cancel your Subscription at least 24 hours before your next scheduled billing date. Your next billing date is displayed in your account settings.
+4.5.5 You may cancel your subscription at any time using the same method you used to sign up:
+4.5.5.1	Online Cancellation: If you signed up online, log into your Account and click “Cancel Subscription” in your account settings. No phone calls, emails, or contact with customer service representatives are required for online cancellation.
+4.5.5.2	Phone Cancellation: If you signed up by phone, you may cancel by calling the salesperson from whom you purchased the Subscription, during normal business hours.
+4.5.5.3	Email Cancellation: If you signed up via email, you may cancel by sending an email to us (using the contact details below), or you may cancel online using the methods described above.
+4.5.6 Upon successful cancellation, all future recurring charges will cease immediately. You will not be charged for any subsequent billing periods after your cancellation is processed. Unless otherwise specified under the Order From, any cancellation will take effect at the end of your current billing period, and you will retain access to the service until that time.
+4.5.7	
+By clicking “Accept”, “Subscribe” or any similar button, or by providing your payment information, you: (a) acknowledge that you have read and understand these automatic renewal terms; (b) expressly consent to automatic recurring charges to your designated payment method; (c) agree that your Subscription will continue until you cancel using the methods described above; (d) understand the cancellation deadline and procedure described above.
+
+4.5.8 If you are a Customer in the US, we will provide you with advance notice of any material changes to your Subscription terms, including price increases, in accordance with the requirements under the applicable law. Continued use of the Services after such notice constitutes acceptance of the modified terms.
+4.5.9	If you have questions about your Subscription or need assistance with cancellation, please contact us using the contact details set forth below
+
+4.6	Non-Refundable Fees and Payment Terms.
+
+To the extent permitted by applicable law, all Fees and other amounts paid are non-refundable and non-cancelable and must be made without any right of set-off, deduction, or counterclaim. All amounts payable under this Agreement are exclusive of all sales, use, value-added, withholding, and other taxes, duties, levies, or governmental charges of any nature, except for taxes based upon Tavily's net income, which shall be your responsibility to pay in addition to the Fees. All payments are quoted and must be paid in United States Dollars unless otherwise specified under the Order Form. Any overdue amounts shall accrue interest daily until paid in full at the lesser of: (i) one and one-half percent (1.5%) per month; or (ii) the maximum rate permitted under applicable law. You will reimburse Tavily for all costs and expenses (including reasonable attorneys' fees) incurred by Tavily in collecting any past due amounts.
+
+4.7	Pricing Changes.
+
+Except as expressly set forth in the Order Form, Tavily reserves the right to modify Fees for the Services at any time in its sole discretion. Pricing changes will not affect your current paid Subscription period until the end of the current billing cycle or any prepaid fees already remitted. For existing Accounts, we will provide advance written notice via email, in the Services or by posting on our Website of any pricing changes before they take effect. Your continued use of the Services after such notice period constitutes acceptance of the new pricing terms, which will apply to subsequent billing cycles.
+
+4.8	Payment Defaults and Account Suspension.
+
+If you fail to pay any Fees when due, if your payment method is declined or fails to process, or if you do not update your payment information following our request, Tavily may, at its discretion: (i) suspend your access to the Services or any features; (ii) downgrade your Account to a free tier (if available); or (iii) terminate your Account or this Agreement, until all outstanding amounts are paid in full and your payment method is updated.
+
+4.9	Third-Party Payment Processing. 
+
+Subscription Fee payments are processed through third-party online payment service providers (“
+Payment Processors
+”), which may include credit card processors, digital wallet services, and banking partners. Tavily may add, remove, or change Payment Processors in its sole discretion without prior notice. Payment Processors enable secure online payments using credit cards, debit cards, bank transfers, or other accepted payment methods. These Payment Processors are independent contractors with no employment, agency, or partnership relationship with Tavily. Tavily does not control and is not affiliated with such Payment Processors beyond the contractual arrangements necessary to process your payments. You acknowledge and agree that: (i) Tavily is not responsible for the actions, performance, security practices, or failures of any Payment Processor; (ii) your use of Payment Processors is at your own risk; (iii) you must comply with all terms of service, privacy policies, and other requirements imposed by the Payment Processors; and (iv) you assume all risks associated with conducting transactions through Payment Processors, including but not limited to data security, transaction processing delays, and payment disputes.
+
+4.10 Subscription via a Partner.
+
+If Customer purchased the Subscription via a Partner, (a) the Subscription is subject to the full payment of the applicable fees and payment terms as set forth in the Partner Order Form between Customer and the respective Partner; (b) all payments of the Fees shall be made directly to Partner, as agreed between Customer and Partner; and (c) if Customer is entitled to a refund under the terms and conditions of this Agreement, then, unless Tavily specifies otherwise, Tavily will refund any applicable fees to the Partner, and the Partner alone will be responsible for refunding the appropriate amounts to Customer.
+
+5. Free Trial
+
+We may, at our sole discretion, offer a free trial Subscription to certain Services (“
+Free-Trial
+”); however the features made available to Users of the Services under the Free-Trial model, may be limited. The Free-Trial period will be stipulated on our Order Form, or otherwise agreed with you in writing. We may impose, at any time and at our sole discretion, restrictions on the use of Services under the Free-Trial model, including limitation on the availability of certain features of the Services, limitations on the period of the Free-Trial or other usage limitation. Furthermore, we reserve the right to cease the provision of Free-Trials, at any time and at our sole discretion, including with respect to existing Free-Trial Accounts, and to provide the Services solely on a payment-based model. Notwithstanding anything to the contrary in these Terms, during the Free-Trial period the Services are provided on an “as is” and “as available” basis without any warranty whatsoever and we will have no warranty, indemnity, support, or other obligations or liabilities with respect to the Free-Trial. Please note that upon termination or expiration of your Free-Trial, for any reason, you will lose access to the Services and all data and functionality therein.
+
+6. AI Functionality
+
+6.1 Overview
+
+Certain functionalities of the Services may include generative AI Tools specifically designed and intended for conducting research and information analysis tasks and other related tasks (collectively, the “
+AI Functionality
+”). Your access to and use of the AI Functionality is subject to all terms and conditions set forth in this Agreement, as well as the terms and conditions of this Section.
+
+6.2 Free Trial AI Functionality
+
+Tavily may provide the AI Functionality to you at no additional charge for a limited introductory period as determined by Tavily in its sole discretion. Tavily reserves the right, at any time and without prior notice to you, to discontinue offering the AI Functionality on a complimentary basis and to begin charging additional fees for access to and use of the AI Functionality. Tavily will provide you with notice of such fees, and your continued use of the AI Functionality following such notice will constitute your acceptance of and agreement to pay such fees.
+
+6.3 Output generated by AI Functionality
+
+You acknowledge and agree that the AI Functionality relies upon and incorporates AI Tools, including large language models and other machine learning systems, which by their nature may produce Outputs that are inaccurate, incomplete, unreliable, inappropriate, misleading, biased, offensive, harmful, or otherwise unsuitable for your intended purposes. The Outputs generated by the AI Functionality may contain factual errors, may misrepresent or mischaracterize information from source materials, may reflect biases present in training data, may include outdated or superseded information, may omit relevant information, may draw inappropriate inferences or conclusions, and may otherwise fail to meet your needs or expectations and/or the Output may not be unique across users.
+
+6.4 AI Functionality Disclaimer and Restrictions
+
+You are solely and exclusively responsible for reviewing, verifying, evaluating, and validating all Outputs generated through the AI Functionality prior to relying upon, using, distributing, publishing, or otherwise making use of such Outputs. You agree that you will not rely upon any Output without first independently verifying its accuracy, completeness, appropriateness, and suitability for your intended purpose through reference to authoritative sources and your own professional judgment. You acknowledge and agree that the Outputs generated by the AI Functionality do not constitute professional advice of any kind, including but not limited to legal advice, financial advice, medical advice, tax advice, or any other form of professional consultation or recommendation. You should not make any decisions or take any actions based solely or primarily upon Outputs generated by the AI Functionality without first consulting with appropriate qualified professionals and conducting your own independent research and analysis. You assume all risks associated with your use of the AI Functionality and any Outputs generated thereby, and you agree that Tavily will have no liability whatsoever for any consequences arising from your use of, reliance upon, or distribution of any Outputs, regardless of whether such consequences are foreseeable. Without limiting the generality of the foregoing, you specifically agree that you will not use the AI Functionality or Outputs in connection with safety-critical systems, medical diagnosis or treatment decisions, legal proceedings or legal advice, financial investment decisions, regulatory compliance determinations, or any other context where accuracy and reliability are essential and where errors could cause substantial harm. You may not use the AI Functionality to create deepfakes, synthetic media, or other artificially generated content intended to deceive, mislead, or manipulate others, or to create content that violates the intellectual property rights, privacy rights, or other legal rights of third parties. You are solely responsible for ensuring that your use of the AI Functionality and any Outputs complies with all applicable laws, regulations, industry standards, professional codes of conduct, and contractual obligations that apply to you, your business, or your industry.
+
+6.5 Customer Input
+
+Tavily and its third-party artificial intelligence service providers may use, process, analyze, and retain Customer Input submitted to the AI Functionality and Outputs generated by the AI Functionality for purposes of training, improving, developing, and enhancing artificial intelligence models, machine learning systems, and related technologies including Tavily’s services. You acknowledge and agree that Tavily and its third-party artificial intelligence service providers may incorporate insights derived from your Customer Input and Outputs into their respective training datasets and may use such data to improve the accuracy, performance, capabilities, and functionality of their artificial intelligence systems.
+
+6.6 Additional Restriction
+
+Customer is solely responsible and liable for evaluating and verifying (including without limitation by human review) the Output as being suitable and appropriate for Customer's use. In addition, Customer shall not engage in any automatic decision-making, or rely upon Output in isolation to make a decision, relating to any person, which has a legal effect or a similarly significant effect on that person. As between the Customer and the Company, the Company and its third-party technology providers and licensors, as applicable, own and reserve all legal rights, title, and interest in and to the AI Functionalities, including all intellectual property and proprietary rights. The Customer may not use AI Functionalities to create or share Output generated by the AI Functionality in a manner that violates this Agreement and/or any third-party agreement or policies. The Customer shall not: (i) use Output generated by the AI Functionality to develop models that compete with the Company and/or any of the Company’s AI Functionalities; (ii) represent that Output was human-generated when it is not or otherwise violate this Agreement; (iii) use any AI Functionalities in violation of applicable laws or third-party rights or for unethical purposes; (iv) attempt to or assist anyone to reverse engineer, decompile or discover the source code or underlying components of AI Functionalities; (v) use the AI Functionalities to harm itself or others or repurpose or distribute Output generated by the AI Functionality in order to harm; (vi) circumvent any safeguards of the AI Functionalities; (vii) assist or encourage anyone to do any of the above. The Customer shall ensure that the Users and any other individuals using the Services under this Agreement, are aware of and comply with the terms of this Section. Company recommends that Customer carefully review, and vet the Output before use or other implementation.
+
+6.7 Third-Party Service Providers
+
+You acknowledge and agree that (i) your or Tavily's use of the AI Functionalities may involve access to Customer Inputs by Third-Party Service Providers and that such access may occur pursuant to agreements between Tavily and such Third-Party Service Providers, rather than this Agreement, and (ii) you use AI Functionalities (and any Customer Input or Output provided or generated in connection therewith) at your own risk. You consent and authorize Tavily to share Customer Input and Output with the AI Functionalities to the extent required to perform the Services and acknowledge and agree that certain Third-Party Service Providers may not be required to maintain the confidentiality of any Customer Input or Output and may retain certain rights to use or disclose Customer Input and Output, including to further train their algorithmic models.
+
+7. Confidentiality
+
+“
+Confidential Information
+” means any non-public information disclosed by one party (“
+Disclosing Party
+”) to the other (“
+Receiving Party
+”) in connection with this Agreement that is designated as confidential or should reasonably be understood to be confidential. The Receiving Party will not disclose or use Confidential Information except as necessary to perform its obligations under this Agreement, as permitted herein or otherwise as required by law. For the avoidance of doubt, Tavily may share Customer Input with its affiliates and vendors and generally as needed to provide the Services (including making queries on third-party public web indexes) or improve its services. Confidential Information does not include information that is or becomes publicly available through no fault of the Receiving Party, is received from a third party without restriction, was already known by the Receiving Party without restriction, or is independently developed without reference to the Confidential Information.
+
+8. Privacy
+
+8.1 General
+
+By accepting this Agreement, you also acknowledge that you have read and agree to our 
+privacy policy
+ (“
+Privacy Policy
+”), which is incorporated herein by reference and governs our collection, use, and disclosure of personal information you provide to us in connection with your Account and use of the Services. The Privacy Policy is available at the following 
+link
+ and may be updated from time to time in accordance with its terms.
+
+8.2 Sensitive Information
+
+You represent and warrant to Tavily that the Customer Input does not and will not, contain any of the following information: (a) social security numbers or other government-issued identification numbers; (b) protected health information subject to the Health Insurance Portability and Accountability Act (HIPAA) or other information regarding an individual’s medical history, mental or physical condition, or medical treatment or diagnosis by a health care professional; (c) health insurance information; (d) biometric information; (e) passwords for online accounts; (f) credentials to any financial accounts; (g) tax return data; (h) credit reports or consumer reports; (i) any payment card information subject to the Payment Card Industry Data Security Standard; (j) information subject to the Gramm-Leach-Bliley Act, Fair Credit Reporting Act or the regulations promulgated under either such law; (k) information subject to restrictions under data protection law governing personal data of children, including, without limitation, all information about children under 13 years of age (or 16 in the EU); or (l) any information that falls within any special categories of data (as defined in the GDPR or under the applicable law).
+
+9. Proprietary Rights
+
+9.1 Customer
+
+Subject to the rights and licenses granted to Tavily, and as between the parties, Customer owns and will continue to own all rights, title and interest, including intellectual property rights, in and to Customer Input. Customer hereby authorizes and instructs Tavily to, and grants Tavily a non-exclusive, royalty-free, and non-transferable right and license to use Customer Input, to provide and improve Tavily’s services, for Tavily to meet its obligations hereunder, or as otherwise required by applicable law.
+
+9.2 Use of Customer Input
+
+You hereby grant Tavily and its affiliates a worldwide, royalty-free, fully paid, transferable, assignable, sublicensable (through multiple tiers), perpetual, and irrevocable license to collect, host, use, access, view, store, copy, display, create derivative works of, delete, and otherwise process Customer Input (including providing Customer Data to applicable Third-Party Service Providers (as defined below) and others) to (i) provide, support, monitor, analyze, and improve the Services and improve Tavily’s other products and services, (ii) communicate with you about your Account, (iii) comply with applicable laws, including court orders, subpoenas, and requests or requirements for information made by regulatory or investigatory entities, (iv) prevent fraud or misuse of the Services, (v) perform market research, and (vi) conduct product research and improvement and development of products and services by Tavily. Tavily will not be required to transmit or provide you or any third party with Customer Input in any format except as required by applicable laws.
+
+9.3 Tavily
+
+Tavily owns and will continue to own all rights, title, and interest, including any and all intellectual property rights, in and to the Services, including, without limitation, any derivative work, enhancement, update, customization, modification, adaptation, alteration, upgrade, new feature, or other improvement thereof or thereto. Except as expressly set forth in this Agreement, no express or implied license or right of any kind is granted to Customer, including, without limitation, any right to obtain possession of any source code, data or other technical material related to the Services or its underlying software and/or intellectual property.
+
+9.4 Feedback
+
+If the Customer contacts the Company with feedback data (e.g., questions, comments, suggestions or the like) regarding the Services (collectively, “
+Feedback
+”), such Feedback shall be deemed non-confidential, and the Company shall have a non-exclusive, royalty-free, worldwide, perpetual license to use or incorporate such Feedback into the Services and/or other current or future products or services of the Company (without the Customer's approval and without further compensation to the Customer).
+
+9.5 Analytics Information
+
+The Company may collect, process and otherwise use information derived from Customer's use of the Services and/or Customer Input, including non-identifiable information, aggregated data, statistical information, and analytics data that does not identify any individual person or entity, including the Customer (collectively, “
+Analytics Information
+”), for the purposes of providing, maintaining, and improving the Company's Services and conducting research and development activities. The Company is and shall remain the sole and exclusive owner of all Analytics Information.
+
+10. Third-Party Services
+
+10.1 Definition
+
+Certain Services or features thereof may rely on, interoperate with, or otherwise utilize or leverage products and/or services provided by or with assistance of third parties (such services, “
+Third-Party Services
+” and the providers of such services, “
+Third-Party Service Providers
+”).
+
+10.2 Third-Party Terms; Disclaimer
+
+You are solely responsible and liable for complying with all terms, conditions and policies imposed by Third-Party Service Providers on Third-Party Services (“
+Third-Party Terms
+”). Tavily is not, and will not be deemed to be, a party to any Third-Party Terms, all of which are exclusively between you and the applicable Third-Party Service Provider(s). Tavily does not make any warranties or guarantees with respect to Third-Party Services, including the performance or continued availability of Third-Party Services and Tavily may (either itself or as required by the Third-Party Service Provider) limit or cease providing interoperation with any or all Third-Party Services (and, as a consequence, certain or all features of the Services may be limited or ceased) without entitling you to any compensation if, for example and without limitation, the Third-Party Service Provider ceases to make the Third-Party Service available for interoperation or use with the Services in a manner acceptable to Tavily. Moreover, the performance of Third-Party Services (and Third-Party Service Providers) is outside Tavily's control. TAVILY WILL NOT BE LIABLE FOR, AND TAVILY EXPRESSLY DISCLAIMS, ANY LIABILITY FOR LOSSES, COSTS, OR EXPENSES TO THE EXTENT CAUSED BY ANY THIRD-PARTY SERVICES OR THIRD-PARTY SERVICE PROVIDERS OR FOR YOUR COMPLIANCE (OR NON-COMPLIANCE) WITH ANY APPLICABLE THIRD-PARTY TERMS, EACH OF WHICH ARE YOUR EXCLUSIVE RESPONSIBILITY AND LIABILITY.
+
+11. Representations and Warranties by Customer
+
+Customer represents and warrants that (a) it is validly existing and in good standing under the laws of the place of its establishment or incorporation, (b) it has full corporate power and authority to execute, deliver and perform its obligations under this Agreement, (c) the person entering into this Agreement on its behalf has been duly authorized and empowered to enter into this Agreement, and (d) this Agreement is valid, binding and enforceable against it in accordance with its terms. Further, Customer represents and warrants that (i) it possesses all necessary rights and consents to grant Tavily the rights set forth in this Agreement with respect to Customer Input, (ii) Customer has collected Customer Input in accordance with all applicable laws, rules and regulations, (iii) neither the Customer Applications, nor the Customer Input, nor Tavily's use of Customer Input in accordance with this Agreement, will (A) infringe, misappropriate, or otherwise violate any rights of any third party, (B) violate applicable laws, rules, or regulations, or Customer’s contractual obligations towards third parties, (C) contain any type of computer virus or any other component that may disrupt, modify, delete, harm, or otherwise impede the operation of the Services and/or Tavily's systems, and (iv) Customer will use the Services in accordance with all applicable laws, rules, and regulations.
+
+12. Indemnification
+
+To the maximum extent permitted by applicable law, you will indemnify and hold Tavily and its affiliates, and its and their officers, employees, and agents harmless against any damages, liabilities, losses, costs, or expenses (including reasonable attorneys’ fees) arising from or in connection with (a) your access to or use of the Services, (b) Customer Input and/or Customer Applications, and/or (c) your breach or alleged breach of this Agreement (each, an “Indemnification Claim”). Additionally, you will, at Tavily’s sole election, defend Tavily from any Indemnification Claims. If Tavily directs you to defend an Indemnification Claim, then (i) Tavily has the right to approve the counsel you select to defend the Indemnification Claim; and (ii) Tavily may also have its own counsel participate in the defense and settlement of the Indemnification Claim at your expense. Tavily may also exclusively retain control of the defense of an Indemnification Claim. You will not settle an Indemnification Claim without Tavily’s written consent.
+
+13. Disclaimers
+
+13.1 General Disclaimers
+
+EXCEPT AS EXPRESSLY SET FORTH HEREIN, THE SERVICES ARE PROVIDED ON AN “AS IS” AND “AS AVAILABLE” BASIS AND TAVILY DISCLAIMS ALL WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, OR TITLE, AND ANY WARRANTIES ARISING OUT OF ANY COURSE OF DEALING OR USAGE OF TRADE. TAVILY DOES NOT WARRANT, AND SPECIFICALLY DISCLAIMS, THAT THE SERVICES WILL OPERATE UNINTERRUPTED, BE ERROR-FREE, OR THAT ALL DEFECTS WILL BE CORRECTED.
+
+13.2 Additional Disclaimers Regarding Output And AI Functionality
+
+WITHOUT LIMITING THE FOREGOING DISCLAIMER OR ANY OTHER DISCLAIMER SET FORTH IN THIS AGREEMENT, TAVILY MAKES NO, AND SPECIFICALLY DISCLAIMS ANY AND ALL, REPRESENTATIONS OR WARRANTIES CONCERNING THE THIRD-PARTY SERVICE PROVIDERS, THE AI FUNCTIONALITY, THE OUTPUTS OR OTHER INFORMATION OR RESULTS OBTAINED OR DERIVED THROUGH THE SERVICES, INCLUDING WITHOUT LIMITATION THEIR ACCURACY, PERFORMANCE, QUALITY, RELIABILITY, SUITABILITY, OR COMPLETENESS, OR THAT ANY OF THE FOREGOING WILL BE NON-INFRINGING OR OTHERWISE COMPLIANT WITH LAW OR MEET CUSTOMER’S EXPECTATIONS. CUSTOMER ACKNOWLEDGES AND AGREES THAT THE OUTPUTS MAY BE BASED ON PUBLICLY AVAILABLE DATA OTHER PUBLICLY AVAILABLE MATERIALS OR THE AI FUNCTIONALITY OVER WHICH TAVILY HAS NO CONTROL, AND ARE GENERATED USING OR AT LEAST PARTIALLY DEPENDENT ON AI TOOLS, THE USE OF WHICH MAY RESULT IN THE OUTPUTS BEING INACCURATE, UNRELIABLE, INAPPROPRIATE, POTENTIALLY INFRINGING, INCOMPLETE, OTHERWISE UNSUITABLE FOR CUSTOMER’S INTENDED PURPOSES OR MAY NOT MEET CUSTOMER’S EXPECTATIONS. ALL OUTPUT THIRD-PARTY SERVICE PROVIDERS, AND THE AI FUNCTIONALITY, IS PROVIDED “AS IS”, THE CUSTOMER USES ALL OUTPUT THIRD-PARTY SERVICE PROVIDERS, AND THE AI FUNCTIONALITY, AT CUSTOMER’S OWN SOLE RISK, AND CUSTOMER IS SOLELY RESPONSIBLE FOR INDEPENDENTLY VETTING, EVALUATING, AND USING THE OUTPUT, THIRD-PARTY SERVICE PROVIDERS, AND THE AI FUNCTIONALITY.
+
+14. Limitation of Liability
+
+TO THE MAXIMUM EXTENT PERMITTED UNDER APPLICABLE LAW, IN NO EVENT WILL TAVILY (INCLUDING ITS EMPLOYEES, CONTRACTORS, AGENTS, DIRECTORS, SHAREHOLDERS, LICENSORS, SUPPLIERS, AFFILIATES AND RESELLERS) BE LIABLE TO CUSTOMER OR ANY THIRD PARTY, WHETHER IN CONTRACT, TORT, OR OTHERWISE, FOR ANY: (
+A
+) SPECIAL, INDIRECT, EXPECTATION, RELIANCE, OR CONSEQUENTIAL DAMAGES, ANY LOSS OF PROFITS, LOSS OF BUSINESS, OR REPUTATIONAL HARM OR DAMAGE, ARISING FROM, RELATED TO, AND/OR CONNECTED TO, THIS AGREEMENT AND/OR ANY USE OF OR INABILITY TO USE THE SERVICES; AND (WITHOUT LIMITING THE GENERALITY OF THE FOREGOING) (
+B
+) AMOUNTS THAT, IN THE AGGREGATE, EXCEED THE FEES ACTUALLY PAID BY CUSTOMER TO TAVILY IN THE THREE (3) MONTHS PRIOR TO THE EVENT GIVING RISE TO THE LIABILITY UNDER THE APPLICABLE ORDER FORM AND ASSOCIATED WITH THE SERVICES PROVIDED, IN EACH CASE EVEN IF THE COMPANY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. THE FOREGOING LIMITATIONS ARE CUMULATIVE AND NOT PER INCIDENT.
+
+15. Term and Termination; Effect of Termination or Expiration
+
+15.1 Term
+
+This Agreement begins on the earlier of: (i) your purchase of the Subscription, (ii) your entry into an Order Form, (iii) your use of the Free Trial, or (iv) your first use of the Services, and shall remain in full force and effect until you cancel your Subscription (in accordance with the terms herein and provided you pay all Fees due) and/or this Agreement is terminated in accordance with the terms herein (the “
+Term
+”).
+
+15.2 Customer Termination
+
+You may terminate this Agreement only at the end of your current Subscription term by providing prior notice as set forth in the Order Form or subscription plan, and if such is not identified then with written notice to Tavily at least thirty (30) days’ prior to the next billing cycle or Subscription renewal date.
+
+15.3 Tavily Termination for Cause
+
+Tavily may immediately, and without prior notice, temporarily or permanently limit, suspend, or terminate your use of the Services and/or deny access to your Account (and thereby terminate this Agreement) for: (a) your breach of this Agreement; (b) non-payment of Fees when due; (c) fraudulent, abusive, or illegal activity; (d) violation of applicable laws or regulations; (e) as required by law, court order, or regulatory authority; or (f) access to the Services from any territory that is restricted or prohibited under applicable export control and economic sanctions laws, or otherwise in contravention of Section 17.1 below. Tavily may, but is not obligated to, provide notice of such suspension or termination.
+
+15.4 Tavily Termination for Convenience
+
+Tavily may, at its sole discretion and without prior notice, cease operation of the Services (or any portion thereof), whether temporarily or permanently, and may delete, modify, or discontinue any information, content, or features. You acknowledge that Tavily assumes no responsibility for any consequences arising from such discontinuation, including loss of data or access. Without derogating from the generality of the foregoing, Tavily may, at its sole discretion and at any time, suspend or terminate any Customer’s use of the Services through any Agent Key, and may revoke any Agent Key at any time without notice.
+
+15.5 Effect of Termination
+
+Upon termination of this Agreement for any reason: (a) you remain liable for all unpaid Fees accrued through the termination date, as the Fees are non-refundable; (b) all rights and licenses granted to you hereunder automatically terminate; (c) you must immediately cease all use of the Services and, if requested, certify such cessation to Tavily; (d) you will lose access to the Services and all data therein; and (e) you must delete all Confidential Information of Tavily in your possession or under your control. Termination of this Agreement shall not affect any party's accrued rights or remedies, including Tavily's right to collect unpaid Fees and pursue available legal remedies. The provisions of this Agreement that by their nature should survive termination shall survive, including but not limited to: payment obligations, intellectual property rights, disclaimers, limitation of liability, indemnification, dispute resolution and miscellaneous provisions.
+
+16. Arbitration
+
+PLEASE READ: THIS SECTION REQUIRES ARBITRATION OF DISPUTES AND LIMITS HOW PARTIES CAN SEEK RELIEF. BOTH PARTIES WAIVE THE RIGHT TO JURY TRIALS AND CLASS ACTIONS.
+
+16.1 Negotiations
+
+Before either party may initiate arbitration, the parties agree to attempt to resolve any dispute informally by providing written notice and engaging in good faith negotiations for 30 days. If not resolved, either party may proceed to arbitration.
+
+16.2 Arbitration
+
+Except for small claims, disputes relating to intellectual property rights, or Tavily sought for an equitable relief, all disputes arising out of or relating to this Agreement will be resolved by final and binding arbitration, not in court, before a neutral arbitrator. The arbitrator may award any relief available in court. This arbitration provision is governed by the Federal Arbitration Act and applies to the fullest extent permitted by law. The arbitrator has exclusive authority to resolve any dispute relating to the interpretation, applicability, or enforceability of this provision.Arbitration will be administered by the American Arbitration Association (AAA) under its Commercial Arbitration Rules. All claims must be brought in an individual capacity, not as a class or representative action. The arbitrator may not consolidate claims or preside over any class or representative proceeding. Any in-person arbitration hearings will be held in Manhattan, New York, unless otherwise agreed. The parties will cooperate to protect confidential information exchanged in arbitration. The arbitrator's decision will be final and binding and may be enforced in any court of competent jurisdiction. Nothing in this section prevents either party from seeking relief from government agencies where permitted by law. Any claim must be filed within one year after it arises, or it is permanently barred, to the extent permitted by law. You may opt out of arbitration within 30 days of first accepting this Agreement by sending written notice to support@tavily.com or to 33 W 60th St, New York, NY 10023. The notice must include your name, address, and a clear statement of your intent to opt out. If you reside outside the United States, you agree that any dispute or claim arising out of or relating to these Terms or your use of the Services will be resolved exclusively through binding arbitration as aforesaid and you expressly waive the right to bring proceedings in any other jurisdiction, except where such waiver is not permitted by applicable law.
+
+16.3 Multiple Case Filing Procedures
+
+The AAA Supplementary Rules for Multiple Case Filings and the AAA Multiple Consumer Case Filing Fee Schedule will apply if twenty-five or more similar claims are asserted against Tavily or against you by the same or coordinated counsel or are otherwise coordinated. In addition to the application of the AAA Supplementary Rules for Multiple Case Filings and the AAA Multiple Consumer Case Filing Fee Schedule, you and Tavily understand and agree that when twenty-five or more similar claims are asserted against Tavily or you by the same or coordinated counsel or are otherwise coordinated, resolution of your or Tavily's claim might be delayed.
+
+17. General
+
+17.1 Export Compliance
+
+The Services may be subject to UK, EU, United States and other jurisdictions’ export control and economic sanctions laws and other foreign trade controls. You agree to comply with applicable laws in connection with your performance hereunder, including without limitation, applicable U.S. and foreign export controls, economic sanctions, and other trade controls.You confirm that you shall not provide access to the Services to any user in an embargoed nation, including without limitation, Cuba, Iran, North Korea, Syria, Crimea Region of Ukraine, the so-called People’s Republic of Luhansk, the so-called People’s Republic of Donetsk, Russia, Lebanon or any other country/region that becomes an embargoed nation (collectively, “
+Sanctioned Territory”) 
+nor are you acting on behalf of any person or entity located, domiciled or ordinarily resident in a Sanctioned Territory. You confirm that you are NOT, nor acting on behalf of any person or entity: (a) designated on the list of sanctioned parties maintained by the , UK and EU, including but not limited to those maintained by the U.S. Department of the Treasury’s Office of Foreign Assets Control (“
+OFAC
+”) and by the U.S. Department of Commerce’s Bureau of Industry and Security (“
+BIS
+”), or (b) part of any government that is targeted by comprehensive OFAC sanctions (currently, Cuba, Iranian, North Korean, and Venezuelan governments, including their agencies and instrumentalities); or (c) any entity owned (at 50% or greater level) or controlled, directly or indirectly, by any party identified in (a) or (b) above (collectively, “Sanctioned Person”). You shall NOT use the Services to engage in activities with or involving any Sanctioned Person or Sanctioned Territory, directly or indirectly, including through a third country or third party.
+
+17.2 Entire Agreement
+
+This Agreement (together with the Privacy Policy and Order Form) constitutes the entire agreement between the parties with respect to its subject matter, and there are no agreements or understandings between the parties, express or implied, except as are expressly set forth in this Agreement. Any terms and conditions printed, or linked to, within any Customer’s purchase order, invoice, or other document which are in addition to and/or inconsistent with the terms and conditions of this Agreement, shall be of no effect.
+17.3 Governing Law; Dispute Resolution
+
+Subject to the Arbitration Clause herein, this Agreement will be governed by and construed in accordance with the laws of the State of New York, without reference to conflict of laws principles, and the parties submit to the exclusive jurisdiction of the federal and state courts in Manhattan, New York for any disputes that arise with respect to this Agreement. Notwithstanding the foregoing, Tavily may seek equitable relief at any time in any court of competent jurisdiction.
+
+17.4 Assignment
+
+You may not assign your rights or obligations under this Agreement without the prior written consent of Tavily. Tavily may assign this Agreement, including without limitation to a successor or affiliate, without notice or consent. Without derogating from and subject to the abovementioned, this Agreement will bind and benefit each Party and its respective successors and assigns.
+
+17.5 Publicity
+
+Customer agrees that: (i) Tavily may use Customer’s name and logo to identify Customer as a client of the Tavily or user of the Service on the Tavily’s website, presentations, marketing materials, or other communications during and following the Term; and (ii) Customer will use commercially reasonable efforts to respond positively to communications received from Tavily’s potential customers. Additionally, Customer will cooperate with Tavily to create a quote and case study for publication on Tavily’s website.
+
+17.6 Force Majeure
+
+Tavily shall not be liable for any failure or delay in performance of its obligations under this Agreement (other than payment obligations) due to causes beyond its reasonable control, including but not limited to acts of God, natural disasters, pandemics, government actions, labor disputes, cyber-attacks, third-party service failures, or other unforeseeable events (each, a “Force Majeure Event”).
+
+17.7 Changes to this Agreement
+
+TAVILY RESERVES THE RIGHT TO MODIFY OR UPDATE THIS AGREEMENT AT ANY TIME AT ITS SOLE DISCRETION. TAVILY MAY, BUT IS NOT REQUIRED TO, POST THE UPDATED AGREEMENT ON ITS WEBSITE OR OTHERWISE NOTIFY YOU OF ANY MODIFICATIONS. EXCEPT FOR THE PRICING MODIFICATION THAT WILL TAKE EFFECT AS DESCRIBED ABOVE, ANY CHANGES TO THIS AGREEMENT WILL BECOME EFFECTIVE IMMEDIATELY UPON POSTING OR AT SUCH LATER DATE AS TAVILY MAY SPECIFY. YOUR CONTINUED USE OF THE SERVICES AFTER ANY MODIFICATIONS HAVE BEEN MADE CONSTITUTES YOUR ACCEPTANCE OF THE MODIFIED AGREEMENT. IF YOU DO NOT AGREE TO THE MODIFICATIONS, YOUR SOLE REMEDY IS TO DISCONTINUE USE OF THE SERVICES AND TERMINATE YOUR ACCOUNT IN ACCORDANCE WITH THE TERMINATION PROVISIONS OF THIS AGREEMENT.
+
+17.8 Audits
+
+Tavily may, by itself or through an independent third party, audit your use of the Services to verify (i) Fees payable and (ii) that you are otherwise compliant with the terms and conditions of this Agreement. You agree to (A) maintain complete and accurate books, logs, and other records with respect to your use of the Services and (B) provide reasonable access to your systems, books, logs, and other records for purposes of conducting these audits.
+
+17.9 Miscellaneous
+
+If any provision of this Agreement is found by any court to be void or otherwise unenforceable, the remainder of this Agreement will remain valid and enforceable as though such void or unenforceable provision were absent on the date of its execution. This Agreement does not, and shall not be construed to create any relationship, partnership, joint venture, employer-employee, agency, or franchisor-franchisee relationship between the Parties, and neither party has authority to contract for or bind the other party in any manner whatsoever. Electronic notice (including email) will satisfy any requirements that notice hereunder be in writing. Written notice is effective on the day of receipt. The failure of either Party to enforce any rights granted hereunder or to take action against the other Party in the event of any breach, shall not be deemed a waiver by that party as to subsequent enforcement or actions in the event of future breaches. Any waiver granted hereunder must be in writing. Any use of the Service by an agency, department, or other entity of the United States government shall be governed solely by the terms of this Agreement. This Agreement is for the sole benefit of the Parties hereto and nothing herein, express or implied, shall give, or be construed to give, any rights hereunder to any other person.
+
+17.10 Contacting Us
+
+We are AlphaAI Technologies Inc. dba Tavily, located at 33 W 60th St, New York, NY 10023. Individuals who wish to contact us may do so by contacting us via the Services' interface, writing to 
+support@tavily.com
+, or by certified mail addressed above.
+
+Power your AI with real-time web search
+
+Explore API docs
+
+Try it out
+
+Built by researchers. Trusted by 2M+ developers.
+
+Opt into comms
+
+By submitting my email address, I agree to receive marketing communications. For more information, please see the
+
+Privacy Policy
+.
+
+Product
+
+Overview
+
+Pricing
+
+Docs
+
+Solutions
+
+Financial Services
+
+Use Cases
+
+Resources
+
+Blog
+
+Events
+
+Customers
+
+Certification
+
+Community
+
+Company
+
+About
+
+Careers
+
+Partnerships
+
+Startups
+
+Brand
+
+Contact
+
+Trust
+
+Trust Center
+
+Privacy Policy
+
+Manage cookies
+
+Accessibility
+
+© 
+2026
+
+Tavily Inc. All rights reserved.
+
+support@tavily.com
+
+Website Terms
+
+Platform Terms
+
+Cookie Notice
+
+Acceptable Use
