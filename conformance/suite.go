@@ -46,6 +46,11 @@ type Target struct {
 	// Revoke runs authorize's revoke at the end, which ends the venue's
 	// grant: a later run needs a person to authorize again.
 	Revoke bool
+	// Expected is what the venue knows it holds, by "metric/aggregation",
+	// over the last complete day before the run's instant: the truth a
+	// wrapper's totals are held to. A venue that sent the traffic itself
+	// knows it; without it the suite can check consistency, not truth.
+	Expected map[string]float64
 }
 
 // Outcome is how one check came out.
@@ -125,6 +130,8 @@ func Run(ctx context.Context, t Target, now time.Time) Report {
 }
 
 func (s *suite) add(c Check) { s.report.Checks = append(s.report.Checks, c) }
+
+func (s *suite) expects(key string) bool { _, ok := s.t.Expected[key]; return ok }
 
 // call runs calls in one request and returns each call's result, or the
 // sentence for why there is none.
@@ -342,8 +349,14 @@ func (s *suite) readTotals(ctx context.Context, m *wp.CapabilityManifest) {
 			case !covers(res.Total.Quality, nm.Support.Quality):
 				c.Outcome, c.Detail = Fail, fmt.Sprintf("%s/%s carries quality %v; the manifest says every read carries %v",
 					nm.Name, agg, res.Total.Quality, nm.Support.Quality)
+			case s.expects(nm.Name+"/"+agg) && res.Total.Value != s.t.Expected[nm.Name+"/"+agg]:
+				c.Outcome, c.Detail = Fail, fmt.Sprintf("%s/%s over %s read %v; the venue holds %v", nm.Name, agg,
+					day(s.lastDay()), res.Total.Value, s.t.Expected[nm.Name+"/"+agg])
 			default:
 				c.Outcome, c.Detail = Pass, fmt.Sprintf("%s/%s over %s: %v", nm.Name, agg, day(s.lastDay()), res.Total.Value)
+				if s.expects(nm.Name + "/" + agg) {
+					c.Detail += ", as the venue holds"
+				}
 			}
 			s.add(c)
 		}

@@ -26,6 +26,7 @@ type fake struct {
 	seriesDisagrees     bool // a series that does not sum to the total
 	partialSeries       bool // declares read_series partial
 	leaksToStderr       bool // prints its key on stderr
+	doubles             bool // reads every count double, consistently
 }
 
 // perDay is the fake's traffic: n pageviews on the nth day of the month, and
@@ -132,6 +133,9 @@ func (f fake) answer(m *wp.CapabilityManifest, c wp.VerbCall) wp.VerbResult {
 		for t := c.Window.Start; t.Before(c.Window.End); t = t.Add(24 * time.Hour) {
 			sum += perDay(t)
 		}
+		if f.doubles {
+			sum *= 2
+		}
 		r.Total = &wp.Reading{Value: sum}
 	case wp.VerbReadSeries:
 		if c.Granularity != wp.GranularityDay && !f.substitutes {
@@ -145,6 +149,9 @@ func (f fake) answer(m *wp.CapabilityManifest, c wp.VerbCall) wp.VerbResult {
 			}
 			if f.seriesDisagrees {
 				v++
+			}
+			if f.doubles {
+				v *= 2
 			}
 			r.Series = append(r.Series, wp.SeriesPoint{At: t, Value: v})
 		}
@@ -247,5 +254,26 @@ func TestAnHonouredVerbTheSuiteCannotExerciseIsUntested(t *testing.T) {
 	}}, now)
 	if r.Passed() || r.Count()[Untested] != 1 {
 		t.Errorf("passed %v, untested %d", r.Passed(), r.Count()[Untested])
+	}
+}
+
+// A wrapper wrong in a consistent way passes every check of consistency, and
+// only the venue's truth catches it (SPIKE.md finding 5).
+func TestOnlyTheVenuesTruthCatchesAConsistentlyWrongWrapper(t *testing.T) {
+	if r := runFake(fake{doubles: true}); !r.Passed() {
+		t.Fatal("without the venue's truth, a consistent wrapper was expected to pass; the test's premise is wrong")
+	}
+	target := Target{Description: description(), Run: fake{doubles: true}.run, Expected: map[string]float64{"pageviews/count": 23},
+		Connection: wp.Connection{Credentials: map[string]string{"ACME_KEY": "acme-key-SECRET"}}}
+	caught := false
+	for _, c := range Run(context.Background(), target, now).Checks {
+		caught = caught || (c.Outcome == Fail && strings.Contains(c.Detail, "the venue holds 23"))
+	}
+	if !caught {
+		t.Error("the venue's truth did not catch a wrapper reading every count double")
+	}
+	target.Run = fake{}.run
+	if r := Run(context.Background(), target, now); !r.Passed() {
+		t.Error("a correct wrapper failed against the venue's truth")
 	}
 }

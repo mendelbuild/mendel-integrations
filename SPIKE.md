@@ -20,7 +20,7 @@ was seen, what it means for the contract, and what, if anything, was done.
 | Harness for the draft | Built: authorize, a publish-to-retract lifecycle, boundaries, a credential-leak check; 19 mutants across two fakes |
 | Mastodon wrapper (publisher, OAuth) | 27 of 27 checks pass live against @mdl_test on mastodon.social (0.1.1); two warnings: `complete` needs a person, and `revoke` is run only when asked |
 | Tavily wrapper (search) | 24 of 24 checks pass live (two basic searches, 2 credits) |
-| Venue-supplied expected values (finding 5) | Next |
+| Venue-supplied expected values (finding 5) | Built: `-expect`; the Plausible venue writes its truth, and a consistently wrong wrapper now fails |
 | Generation test | Last |
 
 ## Findings
@@ -71,7 +71,9 @@ truth.** It confirms a count read as a daily series sums to the same count
 read as a total, which holds on Plausible for a UTC site. It cannot confirm
 that 37 is right: only a venue that sent the 37 knows that. A venue should
 hand the suite its expected values, so a wrapper that reads the wrong metric
-consistently still fails. Not built yet.
+consistently still fails. *Done:* a venue hands the suite an `expected.json`
+(`-expect`); the Plausible venue writes 37/37/11/11, and a mutant reading every
+count double -- consistent with itself, so it passed everything else -- fails.
 
 **6. Authorization is one verb with steps, owned by the wrapper, and `begin`
 produces secrets too.** Decided with Ben (§19, 2026-09-28): the alternative,
