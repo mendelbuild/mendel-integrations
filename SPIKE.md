@@ -19,7 +19,7 @@ was seen, what it means for the contract, and what, if anything, was done.
 | Contract 2-draft (`wrapperprotocol/draft.go` in Mendel) | Built: `authorize` with steps, a secret `credentials` field, the action surface's and search's fields |
 | Harness for the draft | Built: authorize, a publish-to-retract lifecycle, boundaries, a credential-leak check; 19 mutants across two fakes |
 | Mastodon wrapper (publisher, OAuth) | 27 of 27 checks pass live against @mdl_test on mastodon.social (0.1.1); two warnings: `complete` needs a person, and `revoke` is run only when asked |
-| Tavily wrapper (search) | Next |
+| Tavily wrapper (search) | Built and tested against a fake Tavily; live run waiting on a go-ahead, since each search spends credits |
 | Generation test | Last |
 
 ## Findings
@@ -122,3 +122,18 @@ the client id as a password, and the draft held every credential to one rule.
 the protocol shows; secret stays the default, Mendel holds both, and the leak
 check looks only for the secret ones. The harness caught this on real data in
 its first live run of a publisher, which is the case for having it.
+
+**12. A read can cost money, and the manifest has nowhere to say so.** Every
+Tavily search spends credits (1 at basic depth, 2 at advanced), which past the
+free tier are dollars, and Mendel already keeps a `tool_spend` cost kind for
+exactly this. The manifest can say it only in prose, in entitlements. It
+should say it as data -- a price per call per verb, in the tool's own unit,
+and what that unit costs -- so a Hop's search is metered and bounded before it
+runs, the same rule as a generation run. The probe reads the key's usage from
+an endpoint that costs nothing, which is the pattern to ask of every paid tool.
+
+**13. A search is honest only against a window it can prove.** Tavily's
+dates are its estimate of when a page was published or last updated, and a
+windowed search has to drop what it cannot date. So `search` is partial, and
+the harness checks every result of a windowed search is dated inside it; an
+undated result fails rather than passing on trust.

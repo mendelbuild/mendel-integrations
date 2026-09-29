@@ -287,6 +287,8 @@ func (s *suite) honoured(ctx context.Context, m *wp.CapabilityManifest) {
 			s.authorize(ctx, m)
 		case wp.VerbPublish:
 			s.publishLifecycle(ctx, m)
+		case wp.VerbSearch:
+			s.search(ctx, m)
 		default:
 			s.add(Check{Name: "an honoured verb is exercised", Verb: v, Outcome: Untested,
 				Detail: fmt.Sprintf("declared %s; the suite cannot exercise %s yet", level, v)})

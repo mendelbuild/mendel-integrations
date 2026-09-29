@@ -1,0 +1,24 @@
+{
+  "tool": {
+    "slug": "tavily",
+    "name": "Tavily",
+    "homepage": "https://tavily.com",
+    "categories": ["find what is being said"]
+  },
+  "version": "0.1.0",
+  "contract": "2-draft",
+  "image": "mendel-tool-tavily:dev",
+  "command": ["/tavily"],
+  "spec_source": "https://docs.tavily.com/documentation/api-reference/endpoint/search",
+  "connection": {
+    "credentials": [{
+      "name": "TAVILY_API_KEY",
+      "label": "API key",
+      "help": "app.tavily.com, API keys. It starts tvly-."
+    }]
+  },
+  "claims": {
+    "probe": "supported",
+    "search": "partial"
+  }
+}

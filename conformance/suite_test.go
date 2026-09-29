@@ -240,7 +240,7 @@ func TestAnHonouredVerbTheSuiteCannotExerciseIsUntested(t *testing.T) {
 		resp, err := f.respond(ctx, req)
 		for i := range resp.Results {
 			if resp.Results[i].Manifest != nil {
-				resp.Results[i].Manifest.Verbs[wp.VerbSearch] = wp.VerbSupport{Level: wp.VerbSupported}
+				resp.Results[i].Manifest.Verbs[wp.VerbListOwned] = wp.VerbSupport{Level: wp.VerbSupported}
 			}
 		}
 		return resp, "", err

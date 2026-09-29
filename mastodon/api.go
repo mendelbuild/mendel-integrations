@@ -78,6 +78,9 @@ type apiError struct {
 }
 
 func (e *apiError) Error() string {
+	if e.status == 0 { // nothing was sent
+		return e.says
+	}
 	return fmt.Sprintf("the instance answered %d: %s", e.status, e.says)
 }
 
