@@ -210,14 +210,13 @@ func (r WrapperResponse) Redacted() WrapperResponse {
 	return out
 }
 
-// redactedCalls is calls with each authorization code taken out: a code is
-// exchanged once for credentials and is as secret as they are.
+// redactedCalls is calls with each authorization code and state taken out:
+// a code is exchanged once for credentials and is as secret as they are, and
+// the state is what a redirect is matched by.
 func redactedCalls(calls []VerbCall) []VerbCall {
 	out := make([]VerbCall, len(calls))
 	for i, c := range calls {
-		if c.Code != "" {
-			c.Code = ""
-		}
+		c.Code, c.State = "", ""
 		out[i] = c
 	}
 	return out
