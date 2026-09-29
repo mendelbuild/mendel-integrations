@@ -19,7 +19,8 @@ was seen, what it means for the contract, and what, if anything, was done.
 | Contract 2-draft (`wrapperprotocol/draft.go` in Mendel) | Built: `authorize` with steps, a secret `credentials` field, the action surface's and search's fields |
 | Harness for the draft | Built: authorize, a publish-to-retract lifecycle, boundaries, a credential-leak check; 19 mutants across two fakes |
 | Mastodon wrapper (publisher, OAuth) | 27 of 27 checks pass live against @mdl_test on mastodon.social (0.1.1); two warnings: `complete` needs a person, and `revoke` is run only when asked |
-| Tavily wrapper (search) | Built and tested against a fake Tavily; live run waiting on a go-ahead, since each search spends credits |
+| Tavily wrapper (search) | 24 of 24 checks pass live (two basic searches, 2 credits) |
+| Venue-supplied expected values (finding 5) | Next |
 | Generation test | Last |
 
 ## Findings
