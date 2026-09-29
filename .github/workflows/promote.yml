@@ -91,8 +91,7 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
       # As images.yml does for staging's package: asked with no credentials,
-      # after the summary. GitHub created the package private if this was its
-      # first promotion; making it public is a one-time change in its settings.
+      # after the summary, so a package that stops being public is not silent.
       - name: The image can be pulled anonymously
         run: |
           token=$(curl -fsS "https://ghcr.io/token?scope=repository:mendelbuild/wrappers-prod:pull" | jq -r .token) || true

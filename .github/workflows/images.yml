@@ -6,12 +6,11 @@
 # ghcr.io/mendelbuild/wrappers-prod, under the same tag.
 #
 # Every wrapper shares one package per environment, and the tag says which
-# wrapper it is. GitHub creates a package private and has no API to make one
-# public, so a package per wrapper would need a person to click through its
-# settings each time a wrapper is added; a fixed set of packages is made public
-# once. The set is one package per kind of image a project's cluster pulls, per
-# environment: wrappers-staging and wrappers-prod here, and Mendel's
-# wrapper-shim-staging and wrapper-shim-prod, pushed by its gke-deploy.sh.
+# wrapper it is. The set of packages is fixed, one per kind of image a
+# project's cluster pulls, per environment: wrappers-staging and wrappers-prod
+# here, and Mendel's wrapper-shim-staging and wrapper-shim-prod, pushed by its
+# gke-deploy.sh. Staging's and production's images are kept apart by package,
+# and a new wrapper is a tag, never a package (README, "Publishing").
 #
 # Nothing here checks for a collision, because none can happen:
 #
@@ -156,9 +155,9 @@ jobs:
             echo "and register the same digest from ghcr.io/mendelbuild/wrappers-prod on production."
           } >> "$GITHUB_STEP_SUMMARY"
       # Asked with no credentials, as a project's cluster would ask, and after
-      # the summary, so the digest is printed either way. GitHub created the
-      # package private if this was its first push; making it public is a
-      # one-time change in its settings.
+      # the summary, so the digest is printed either way. A package this
+      # workflow creates takes the repository's visibility, so this passes
+      # while the repository is public; it is here so that stops being silent.
       - name: The image can be pulled anonymously
         run: |
           token=$(curl -fsS "https://ghcr.io/token?scope=repository:mendelbuild/wrappers-staging:pull" | jq -r .token) || true

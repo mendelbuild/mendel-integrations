@@ -340,16 +340,19 @@ checks that it did, so production registers exactly the bytes staging tested;
 nothing is rebuilt. It refuses a staging tag that names another digest and a
 production tag that already names one, and promoting twice is a no-op.
 
-**Why two packages rather than one per wrapper.** GitHub creates every package
-private and offers no API to make one public, and a private package can be
-registered but cannot be pulled by any project's cluster. A package per
-wrapper would need a person to click through its settings for every wrapper
-added, so the set of packages is fixed and each is made public once: one per
-kind of image a project's cluster pulls, per environment. There are four:
-these two, and Mendel's `wrapper-shim-staging` and `wrapper-shim-prod`, pushed
-by its `deploy/gke-deploy.sh`. A new kind of image adds a package; a new
-wrapper never does. Both workflows check that what they wrote can be pulled
-with no credentials, and name the settings page to fix it if not.
+**Why two packages rather than one per wrapper.** The set of packages under
+`ghcr.io/mendelbuild` is fixed: one per kind of image a project's cluster
+pulls, per environment. There are four, these two and Mendel's
+`wrapper-shim-staging` and `wrapper-shim-prod`, pushed by its
+`deploy/gke-deploy.sh`. A new kind of image adds a package; a new wrapper
+never does. Every one has to be public, because a private package can be
+registered but cannot be pulled by any project's cluster. A package first
+pushed by a workflow in this public repository takes the repository's
+visibility, so these two were public from their first push; the shim's,
+first pushed with a person's token, were created private and made public once,
+by hand, since GitHub has no API for it. Both workflows still check that what
+they wrote can be pulled with no credentials, and name the settings page to
+fix it if not.
 
 Nothing checks for collisions, because none can happen. A directory must be
 named for the slug its `wrapper.json` declares (the workflow fails otherwise),
