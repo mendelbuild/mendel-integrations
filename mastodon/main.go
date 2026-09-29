@@ -23,7 +23,7 @@ import (
 )
 
 // wrapperVersion is this wrapper's own version, recorded as its provenance.
-const wrapperVersion = "0.1.1"
+const wrapperVersion = "0.2.0"
 
 // runTimeout bounds one run: a handful of HTTP calls.
 const runTimeout = 45 * time.Second
@@ -48,13 +48,13 @@ func run(ctx context.Context, in io.Reader, out io.Writer, client *http.Client) 
 		return fmt.Errorf("the request is not readable")
 	}
 	var resp wp.WrapperResponse
-	if req.Contract != wp.DraftContractVersion {
+	if req.Contract != wp.ContractVersion {
 		verb := wp.VerbProbe
 		if len(req.Calls) > 0 {
 			verb = req.Calls[0].Verb
 		}
 		resp.Results = append(resp.Results, wp.VerbResult{Verb: verb,
-			Refused: fmt.Sprintf("this wrapper speaks contract %q and was sent %q", wp.DraftContractVersion, req.Contract)})
+			Refused: fmt.Sprintf("this wrapper speaks contract %q and was sent %q", wp.ContractVersion, req.Contract)})
 		return json.NewEncoder(out).Encode(resp)
 	}
 	api := newAPI(req.Connection, client)
@@ -88,5 +88,5 @@ func answer(ctx context.Context, a *api, c wp.VerbCall) wp.VerbResult {
 	if s, ok := verbs()[c.Verb]; ok && s.Level == wp.VerbDeclined {
 		return wp.VerbResult{Verb: c.Verb, Refused: fmt.Sprintf("this wrapper declares %s absent: %s", c.Verb, s.Reason)}
 	}
-	return wp.VerbResult{Verb: c.Verb, Refused: fmt.Sprintf("%q is not a verb of contract %s", c.Verb, wp.DraftContractVersion)}
+	return wp.VerbResult{Verb: c.Verb, Refused: fmt.Sprintf("%q is not a verb of contract %s", c.Verb, wp.ContractVersion)}
 }

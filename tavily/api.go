@@ -121,8 +121,6 @@ func verbs() map[wp.Verb]wp.VerbSupport {
 	return map[wp.Verb]wp.VerbSupport{
 		wp.VerbProbe:         {Level: wp.VerbSupported},
 		wp.VerbAuthorize:     declined("Tavily is connected with an API key a person types."),
-		wp.VerbDescribeShape: declined("A search result's shape is the article kind's; nothing is refined here."),
-		wp.VerbLimits:        declined("The limits are in the manifest's entitlements, read from the key's usage."),
 		wp.VerbDraft:         nothing, wp.VerbPublish: nothing, wp.VerbStatus: nothing, wp.VerbAppendUpdate: nothing,
 		wp.VerbRetract: nothing, wp.VerbReadBack: nothing, wp.VerbReadMetrics: nothing, wp.VerbSetCap: nothing,
 		wp.VerbListOwned:  nothing,
@@ -159,7 +157,7 @@ func (a *api) probe(ctx context.Context) wp.VerbResult {
 		ent["key_limit"] = *u.Key.Limit
 	}
 	return wp.VerbResult{Verb: wp.VerbProbe, Manifest: &wp.CapabilityManifest{
-		Contract:         wp.DraftContractVersion,
+		Contract:         wp.ContractVersion,
 		Wrapper:          wp.WrapperProvenance{Version: wrapperVersion, SpecSource: specSource, SpecHash: specHash()},
 		Verbs:            verbs(),
 		Metrics:          map[string]wp.MetricSupport{},

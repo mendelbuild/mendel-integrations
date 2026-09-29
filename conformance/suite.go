@@ -191,8 +191,8 @@ func (s *suite) probe(ctx context.Context) *wp.CapabilityManifest {
 		c.Outcome, c.Detail = Fail, err.Error()
 	case !res.Succeeded():
 		c.Outcome, c.Detail = Fail, res.Why()
-	case res.Manifest.CheckAs(d.Contract) != "":
-		c.Outcome, c.Detail = Fail, res.Manifest.CheckAs(d.Contract)
+	case res.Manifest.Check() != "":
+		c.Outcome, c.Detail = Fail, res.Manifest.Check()
 	default:
 		c.Outcome = Pass
 	}
@@ -237,7 +237,7 @@ func (s *suite) probe(ctx context.Context) *wp.CapabilityManifest {
 // --- 3. Declared absent ---
 
 func (s *suite) declaredAbsent(ctx context.Context, m *wp.CapabilityManifest) {
-	for _, v := range wp.VerbsOf(s.t.Description.Contract) {
+	for _, v := range wp.ContractVerbs() {
 		if m.Verbs[v].Level != wp.VerbDeclined {
 			continue
 		}
@@ -280,7 +280,7 @@ func (s *suite) honoured(ctx context.Context, m *wp.CapabilityManifest) {
 	// judged: what was published is read back, counted and retracted.
 	lifecycle := map[wp.Verb]bool{wp.VerbPublish: true, wp.VerbStatus: true, wp.VerbReadBack: true,
 		wp.VerbReadMetrics: true, wp.VerbRetract: true}
-	for _, v := range wp.VerbsOf(s.t.Description.Contract) {
+	for _, v := range wp.ContractVerbs() {
 		level := m.Verbs[v].Level
 		if level == wp.VerbDeclined || v == wp.VerbProbe || (lifecycle[v] && v != wp.VerbPublish) {
 			continue

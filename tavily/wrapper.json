@@ -5,8 +5,8 @@
     "homepage": "https://tavily.com",
     "categories": ["find what is being said"]
   },
-  "version": "0.1.0",
-  "contract": "2-draft",
+  "version": "0.2.0",
+  "contract": "2",
   "image": "mendel-tool-tavily:dev",
   "command": ["/tavily"],
   "spec_source": "https://docs.tavily.com/documentation/api-reference/endpoint/search",

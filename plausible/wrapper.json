@@ -5,8 +5,8 @@
     "homepage": "https://plausible.io",
     "categories": ["know what visitors do"]
   },
-  "version": "0.1.1",
-  "contract": "1",
+  "version": "0.2.0",
+  "contract": "2",
   "image": "mendel-tool-plausible:dev",
   "command": ["/plausible"],
   "spec_source": "https://plausible.io/docs/stats-api",

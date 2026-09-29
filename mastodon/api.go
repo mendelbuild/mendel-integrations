@@ -156,10 +156,6 @@ func verbs() map[wp.Verb]wp.VerbSupport {
 	return map[wp.Verb]wp.VerbSupport{
 		wp.VerbProbe:     {Level: wp.VerbSupported},
 		wp.VerbAuthorize: {Level: wp.VerbSupported},
-		wp.VerbDescribeShape: declined("A social_post's shape on this instance is in the manifest's kinds, refined by " +
-			"the instance's own character limit."),
-		wp.VerbLimits: declined("The instance's limits are in the manifest's entitlements: 300 calls in five minutes " +
-			"per account, and 30 deletions in thirty minutes."),
 		wp.VerbDraft: declined("A status is public to its audience the moment it is posted. The only state before " +
 			"that is a status scheduled at least five minutes ahead, which this version does not use."),
 		wp.VerbPublish: {Level: wp.VerbPartial, Caveat: "Now only; at and announce are refused. Visibility is the " +
@@ -181,7 +177,7 @@ func verbs() map[wp.Verb]wp.VerbSupport {
 func metrics() map[string]wp.MetricSupport {
 	out := map[string]wp.MetricSupport{}
 	for name := range counts {
-		out[name] = wp.MetricSupport{Level: wp.MetricAvailable, Aggregations: []string{"count"}, Quality: countQuality}
+		out[name] = wp.MetricSupport{Level: wp.MetricAvailable, Kind: wp.KindCount, Aggregations: []string{"count"}, Quality: countQuality}
 	}
 	out["impressions"] = wp.MetricSupport{Level: wp.MetricUnavailable,
 		Reason: "Mastodon does not count who saw a status, by design."}
@@ -246,7 +242,7 @@ func (a *api) probe(ctx context.Context) wp.VerbResult {
 		entitlements["locked"] = me.Locked
 	}
 	return wp.VerbResult{Verb: wp.VerbProbe, Manifest: &wp.CapabilityManifest{
-		Contract: wp.DraftContractVersion,
+		Contract: wp.ContractVersion,
 		Wrapper:  wp.WrapperProvenance{Version: wrapperVersion, SpecSource: specSource, SpecHash: specHash()},
 		Verbs:    verbs(),
 		Metrics:  metrics(),

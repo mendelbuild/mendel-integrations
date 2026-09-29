@@ -42,15 +42,20 @@ import (
 // version it was written against, and a request carries the version Mendel
 // speaks; they must match, since a wrapper meeting a newer contract should say
 // so rather than act on the parts it recognises.
-const ContractVersion = "1"
+//
+// Contract 2 (2026-09-29) is what the wrapper-vetting spike settled
+// (doc 35 §19): contract 1 carried a data source and nothing else. It adds
+// authorize and the secret credentials field, the action surface's and
+// search's arguments and answers (surface.go), and a kind for every metric;
+// it drops describe_shape and limits, which the manifest already answers.
+const ContractVersion = "2"
 
-// Verb is one of the contract's fifteen verbs.
+// Verb is one of the contract's fourteen verbs.
 type Verb string
 
 const (
 	VerbProbe         Verb = "probe"
-	VerbDescribeShape Verb = "describe_shape"
-	VerbLimits        Verb = "limits"
+	VerbAuthorize     Verb = "authorize"
 	VerbDraft         Verb = "draft"
 	VerbPublish       Verb = "publish"
 	VerbStatus        Verb = "status"
@@ -68,7 +73,7 @@ const (
 // ContractVerbs is every verb, in the order §6 lists them. A manifest answers
 // for all of them: a verb left out is not declined, it is unaccounted for.
 func ContractVerbs() []Verb {
-	return []Verb{VerbProbe, VerbDescribeShape, VerbLimits, VerbDraft, VerbPublish, VerbStatus,
+	return []Verb{VerbProbe, VerbAuthorize, VerbDraft, VerbPublish, VerbStatus,
 		VerbAppendUpdate, VerbRetract, VerbReadBack, VerbReadMetrics, VerbSetCap, VerbListOwned,
 		VerbReadSeries, VerbReadTotal, VerbSearch}
 }
@@ -114,9 +119,9 @@ type VerbCall struct {
 	Granularity string   `json:"granularity,omitempty"`
 	Filter      *Filter  `json:"filter,omitempty"`
 
-	// The rest are contract 2-draft's (draft.go): authorize's step and its
-	// arguments, the action surface's asset and reference, and search's
-	// query. Code is a secret, as the credentials are.
+	// Authorize's step and its arguments, the action surface's asset and
+	// reference, and search's query (surface.go). Code is a secret, as the
+	// credentials are.
 	Step           string          `json:"step,omitempty"`
 	RedirectURI    string          `json:"redirect_uri,omitempty"`
 	State          string          `json:"state,omitempty"`
@@ -183,7 +188,7 @@ type VerbResult struct {
 	// Total is read_total's answer.
 	Total *Reading `json:"total,omitempty"`
 
-	// The rest are contract 2-draft's (draft.go).
+	// The rest are authorize's and the action surface's (surface.go).
 	//
 	// Credentials are what authorize produced, for Mendel to hold encrypted
 	// and hand back on every later run. They are secret: only authorize may
@@ -264,13 +269,61 @@ const (
 	MetricUnavailable MetricLevel = "unavailable"
 )
 
+// MetricKind is what one reading of a metric is, which decides what may be
+// done with readings: a count or a sum over a window is the sum of it over
+// the window's parts, and nothing else here is. A rate summed across days,
+// or people counted twice for coming back, is a number nobody should plan
+// against -- and a wrapper can report one while every reading is right for
+// its own window (SPIKE.md finding 14, where a generated wrapper declared
+// bounce rate a "sum"). The kind is the wrapper saying which it is.
+type MetricKind string
+
+const (
+	// KindCount is a number of events: additive across windows. Read as
+	// count, or as unique (the distinct people behind the events).
+	KindCount MetricKind = "count"
+	// KindPeople is a number of distinct people: not additive, since one
+	// person in two windows is one person. Read as unique.
+	KindPeople MetricKind = "people"
+	// KindSum is a quantity summed, in a unit: additive. Read as sum.
+	KindSum MetricKind = "sum"
+	// KindRate is a ratio of two counts the tool computes over the window
+	// asked for, per something: not additive. Read as value.
+	KindRate MetricKind = "rate"
+	// KindAverage is a mean the tool computes over the window, in a unit,
+	// per something: not additive. Read as value.
+	KindAverage MetricKind = "average"
+)
+
+// Additive reports whether a reading over a window is the sum of readings
+// over its parts, and so may be added up.
+func (k MetricKind) Additive() bool { return k == KindCount || k == KindSum }
+
+// kindAggregations are the aggregations each kind may be read with.
+var kindAggregations = map[MetricKind][]string{
+	KindCount: {"count", "unique"}, KindPeople: {"unique"}, KindSum: {"sum"},
+	KindRate: {"value"}, KindAverage: {"value"},
+}
+
 // MetricSupport is a manifest's answer for one metric the tool exposes.
 type MetricSupport struct {
 	Level MetricLevel `json:"level"`
 	// Reason is why it is unavailable. Zendesk withholds article views by
 	// design; the manifest says so, never zero.
 	Reason string `json:"reason,omitempty"`
-	// Aggregations this metric can be read with: count, unique, sum.
+	// Kind is what one reading is (MetricKind); required when available.
+	// Prefer counts: offer a rate or an average only where the tool gives no
+	// counts to take the ratio of, since Mendel can divide two counts itself.
+	Kind MetricKind `json:"kind,omitempty"`
+	// Per is what a rate or an average is per ("visit", "page view");
+	// required for those kinds.
+	Per string `json:"per,omitempty"`
+	// Unit is what a sum or an average is measured in ("USD", "seconds");
+	// required for those kinds.
+	Unit string `json:"unit,omitempty"`
+	// Aggregations this metric can be read with, as its kind allows: count
+	// and unique for a count, unique for people, sum for a sum, value for a
+	// rate or an average.
 	Aggregations []string `json:"aggregations"`
 	// Uniqueness is what "unique" means for this metric, in the tool's own
 	// words, cited. Required when Aggregations includes unique.
@@ -327,22 +380,17 @@ var manifestVenues = []string{"test_account", "reversible_writes", "read_only", 
 // Check refuses a malformed manifest, the way experiment.MigrationContract
 // refuses a malformed contract at the probe: a manifest Mendel plans from
 // has to answer every question, and "did not say" is not an answer.
-func (m *CapabilityManifest) Check() string { return m.CheckAs(ContractVersion) }
-
-// CheckAs checks a manifest against a contract version the caller speaks:
-// ContractVersion for Mendel's server, and DraftContractVersion as well for a
-// conformance run of a wrapper written against the draft.
-func (m *CapabilityManifest) CheckAs(contract string) string {
+func (m *CapabilityManifest) Check() string {
 	if m == nil {
 		return "the probe returned no manifest"
 	}
-	if m.Contract != contract {
-		return fmt.Sprintf("the manifest is for contract %q; Mendel speaks %q", m.Contract, contract)
+	if m.Contract != ContractVersion {
+		return fmt.Sprintf("the manifest is for contract %q; Mendel speaks %q", m.Contract, ContractVersion)
 	}
 	if m.Wrapper.Version == "" || m.Wrapper.SpecSource == "" || m.Wrapper.SpecHash == "" {
 		return "the manifest does not say which wrapper version answered or which spec it was written against"
 	}
-	for _, v := range VerbsOf(contract) {
+	for _, v := range ContractVerbs() {
 		s, ok := m.Verbs[v]
 		if !ok {
 			return fmt.Sprintf("the manifest does not answer for verb %s; a verb it lacks is declined, not omitted", v)
@@ -365,32 +413,42 @@ func (m *CapabilityManifest) CheckAs(contract string) string {
 		}
 	}
 	for v := range m.Verbs {
-		if !isVerbOf(contract, v) {
+		if !isContractVerb(v) {
 			return fmt.Sprintf("the manifest answers for %q, which is not a verb of the contract", v)
 		}
 	}
 	if m.Verbs[VerbProbe].Level != VerbSupported {
 		return "a wrapper that answered probe must declare probe supported"
 	}
-	if len(m.Metrics) == 0 && (contract == ContractVersion || m.readsNumbers()) {
-		return "the manifest lists no metrics; a data source with nothing to read is not one"
+	if len(m.Metrics) == 0 && m.readsNumbers() {
+		return "the manifest reads numbers and lists no metrics"
 	}
-	if contract == DraftContractVersion {
-		if why := m.checkDraft(); why != "" {
-			return why
-		}
+	if why := m.checkSurface(); why != "" {
+		return why
 	}
 	for _, ms := range SortedMetrics(m.Metrics) {
 		switch ms.Support.Level {
 		case MetricAvailable:
-			if len(ms.Support.Aggregations) == 0 {
+			allowed, known := kindAggregations[ms.Support.Kind]
+			switch {
+			case !known:
+				return fmt.Sprintf("metric %s has kind %q; say what one reading is: count, people, sum, rate or average",
+					ms.Name, ms.Support.Kind)
+			case (ms.Support.Kind == KindRate || ms.Support.Kind == KindAverage) && strings.TrimSpace(ms.Support.Per) == "":
+				return fmt.Sprintf("metric %s is a %s without saying what it is per", ms.Name, ms.Support.Kind)
+			case (ms.Support.Kind == KindSum || ms.Support.Kind == KindAverage) && strings.TrimSpace(ms.Support.Unit) == "":
+				return fmt.Sprintf("metric %s is a %s without saying its unit", ms.Name, ms.Support.Kind)
+			case len(ms.Support.Aggregations) == 0:
 				return fmt.Sprintf("metric %s is available with no aggregation it can be read with", ms.Name)
 			}
 			for _, a := range ms.Support.Aggregations {
-				switch a {
-				case "count", "unique", "sum":
-				default:
-					return fmt.Sprintf("metric %s offers aggregation %q; want count, unique or sum", ms.Name, a)
+				ok := false
+				for _, want := range allowed {
+					ok = ok || a == want
+				}
+				if !ok {
+					return fmt.Sprintf("metric %s is a %s and offers aggregation %q; a %s is read as %s",
+						ms.Name, ms.Support.Kind, a, ms.Support.Kind, strings.Join(allowed, " or "))
 				}
 				if a == "unique" && strings.TrimSpace(ms.Support.Uniqueness) == "" {
 					return fmt.Sprintf("metric %s can be read unique without saying what unique means for it", ms.Name)
@@ -441,8 +499,8 @@ func (m *CapabilityManifest) IsDataSource() bool {
 	return true
 }
 
-func isVerbOf(contract string, v Verb) bool {
-	for _, c := range VerbsOf(contract) {
+func isContractVerb(v Verb) bool {
+	for _, c := range ContractVerbs() {
 		if c == v {
 			return true
 		}

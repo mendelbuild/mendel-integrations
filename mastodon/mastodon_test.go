@@ -111,7 +111,7 @@ func do(t *testing.T, f *fakeInstance, creds map[string]string, config map[strin
 	t.Helper()
 	srv := httptest.NewServer(f)
 	defer srv.Close()
-	body, _ := json.Marshal(wp.WrapperRequest{Contract: wp.DraftContractVersion,
+	body, _ := json.Marshal(wp.WrapperRequest{Contract: wp.ContractVersion,
 		Connection: wp.Connection{AccountID: "fake.example", Endpoint: srv.URL, Credentials: creds, Config: config}, Calls: calls})
 	var out bytes.Buffer
 	if err := run(context.Background(), bytes.NewReader(body), &out, srv.Client()); err != nil {
@@ -134,7 +134,7 @@ func TestProbeAnswersADraftManifestWithTheInstancesLimits(t *testing.T) {
 	f.maxChars = 1000
 	resp, _ := do(t, f, authorized(f), nil, wp.VerbCall{Verb: wp.VerbProbe})
 	m := resp.Results[0].Manifest
-	if why := m.CheckAs(wp.DraftContractVersion); why != "" {
+	if why := m.Check(); why != "" {
 		t.Fatalf("the manifest is refused: %s", why)
 	}
 	if m.Entitlements["account"] != "mdl_test" {
@@ -306,7 +306,7 @@ func TestWrapperJSONAgreesWithWhatTheWrapperAnswers(t *testing.T) {
 	if strings.Join(entrypoint, "\x00") != strings.Join(d.Command, "\x00") || len(entrypoint) == 0 {
 		t.Errorf("wrapper.json's command is %q; the Dockerfile's ENTRYPOINT is %q", d.Command, entrypoint)
 	}
-	if d.Version != wrapperVersion || d.Contract != wp.DraftContractVersion || d.SpecSource != specSource || !d.Connection.Authorize {
+	if d.Version != wrapperVersion || d.Contract != wp.ContractVersion || d.SpecSource != specSource || !d.Connection.Authorize {
 		t.Errorf("wrapper.json says %q %q %q authorize=%v", d.Version, d.Contract, d.SpecSource, d.Connection.Authorize)
 	}
 	names := map[string]bool{}

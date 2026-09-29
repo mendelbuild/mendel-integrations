@@ -30,11 +30,11 @@ type publisher struct {
 
 func (p *publisher) manifest() *wp.CapabilityManifest {
 	m := &wp.CapabilityManifest{
-		Contract: wp.DraftContractVersion,
+		Contract: wp.ContractVersion,
 		Wrapper:  wp.WrapperProvenance{Version: "1.0", SpecSource: "https://pub.example/api", SpecHash: "sha256:x"},
 		Verbs:    map[wp.Verb]wp.VerbSupport{},
 		Metrics: map[string]wp.MetricSupport{
-			"likes":       {Level: wp.MetricAvailable, Aggregations: []string{"count"}, Quality: []string{"lifetime"}},
+			"likes":       {Level: wp.MetricAvailable, Kind: wp.KindCount, Aggregations: []string{"count"}, Quality: []string{"lifetime"}},
 			"impressions": {Level: wp.MetricUnavailable, Reason: "not counted"},
 		},
 		Venue: "reversible_writes", Idempotency: "native key", Entitlements: map[string]any{},
@@ -44,7 +44,7 @@ func (p *publisher) manifest() *wp.CapabilityManifest {
 		Kinds: map[string]wp.KindSupport{"social_post": {Level: wp.VerbSupported,
 			Shape: json.RawMessage(`{"type":"object","required":["text"],"properties":{"text":{"type":"string","maxLength":40},"link":{"type":"string"}}}`)}},
 	}
-	for _, v := range wp.VerbsOf(wp.DraftContractVersion) {
+	for _, v := range wp.ContractVerbs() {
 		m.Verbs[v] = wp.VerbSupport{Level: wp.VerbDeclined, Reason: "not here"}
 	}
 	for _, v := range []wp.Verb{wp.VerbProbe, wp.VerbAuthorize, wp.VerbPublish, wp.VerbStatus, wp.VerbReadBack,
@@ -56,7 +56,7 @@ func (p *publisher) manifest() *wp.CapabilityManifest {
 
 func (p *publisher) run(_ context.Context, req wp.WrapperRequest) (wp.WrapperResponse, string, error) {
 	var out wp.WrapperResponse
-	if req.Contract != wp.DraftContractVersion {
+	if req.Contract != wp.ContractVersion {
 		out.Results = append(out.Results, wp.VerbResult{Verb: req.Calls[0].Verb, Refused: "draft only"})
 		return out, "", nil
 	}
@@ -160,7 +160,7 @@ func (p *publisher) answer(conn wp.Connection, c wp.VerbCall) wp.VerbResult {
 
 func runPublisher(p *publisher) Report {
 	p.posts, p.byKey = map[string]json.RawMessage{}, map[string]string{}
-	d := wp.Description{Tool: wp.Tool{Slug: "pub", Name: "Pub"}, Version: "1.0", Contract: wp.DraftContractVersion,
+	d := wp.Description{Tool: wp.Tool{Slug: "pub", Name: "Pub"}, Version: "1.0", Contract: wp.ContractVersion,
 		Image: "pub:dev", Command: []string{"/pub"}, SpecSource: "https://pub.example/api",
 		Connection: wp.ConnectionSpec{Account: &wp.Field{Label: "Account"}, Authorize: true,
 			Credentials: []wp.Field{{Name: "PUB_TOKEN", Label: "Token"}}},

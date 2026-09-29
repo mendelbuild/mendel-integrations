@@ -23,6 +23,21 @@ was seen, what it means for the contract, and what, if anything, was done.
 | Venue-supplied expected values (finding 5) | Built: `-expect`; the Plausible venue writes its truth, and a consistently wrong wrapper now fails |
 | Generation test (`spike/generate/`) | Done: both tools generated blind, each passing after one repair round, $4.36 in all; see "The generation test" |
 
+## Contract 2 (2026-09-29)
+
+The draft became the contract: `wrapperprotocol` speaks `"2"` alone, with
+authorize, the secret credentials field, the action surface and search, and
+without `describe_shape` and `limits`. And every available metric declares its
+**kind** -- count, people, sum, rate or average, with what a rate or an average
+is per and what a sum or an average is in -- and is read only as its kind
+allows, so a rate offered as a sum is refused at the manifest (finding 14).
+All three wrappers moved to it (0.2.0) and pass live again. Plausible now
+offers the two metrics it can only give as a rate and an average -- bounce
+rate per visit, visit duration in seconds per visit -- and refuses either over
+a window nobody visited, where Plausible answers 0 and the honest answer is
+that there is none; it still declines views per visit, which is two counts
+Mendel can divide itself.
+
 ## The generation test
 
 The question the spike exists to answer: can an agent write a wrapper from a
@@ -214,4 +229,9 @@ check meaning where it can:
   of it.
 - *The contract could say what a metric is* -- a count of events, a count of
   people, a sum of a value, a rate, an average -- so "rate read as sum" is
-  refused at the manifest, before any number is read.
+  refused at the manifest, before any number is read. *Done in contract 2*,
+  as self-documentation, which Ben chose over the checks above for now: an
+  honest wrapper can now say a metric is a rate, and a manifest that offers a
+  rate as a sum is refused. A wrapper that mislabels the kind itself is still
+  caught only by a person reading it; additivity against a venue with spread
+  traffic would catch that, and is not built.

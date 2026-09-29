@@ -44,7 +44,7 @@ func (f fake) manifest() *wp.CapabilityManifest {
 		Wrapper:  wp.WrapperProvenance{Version: "1.0", SpecSource: "https://acme.example/api", SpecHash: "sha256:x"},
 		Verbs:    map[wp.Verb]wp.VerbSupport{},
 		Metrics: map[string]wp.MetricSupport{
-			"pageviews":   {Level: wp.MetricAvailable, Aggregations: []string{"count"}},
+			"pageviews":   {Level: wp.MetricAvailable, Kind: wp.KindCount, Aggregations: []string{"count"}},
 			"bounce_rate": {Level: wp.MetricUnavailable, Reason: "a rate, not a count"},
 		},
 		Granularities:    []string{wp.GranularityDay},

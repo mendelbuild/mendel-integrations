@@ -200,8 +200,7 @@ func verbs() map[string]verbSupport {
 	readOnly := declined("Plausible is a data source: this wrapper reads and never writes.")
 	return map[string]verbSupport{
 		"probe":          {Level: "supported"},
-		"describe_shape": declined("A data source places no External Asset Kind, so there is no shape to describe."),
-		"limits":         declined("Not in contract 1's data-source cut; the documented rate limit is in the probe's entitlements."),
+		"authorize":      declined("Plausible is connected with a Stats API key a person types."),
 		"draft":          readOnly,
 		"publish":        readOnly,
 		"status":         declined("There is no placed asset to report the status of."),
@@ -212,33 +211,44 @@ func verbs() map[string]verbSupport {
 		"set_cap":        readOnly,
 		"list_owned":     declined("Mendel owns nothing in Plausible."),
 		"read_series": {Level: "partial", Caveat: "Buckets are hours, days, weeks and months in the site's " +
-			"reporting timezone, not UTC, and a week begins where Plausible begins it."},
+			"reporting timezone, not UTC, and a week begins where Plausible begins it. Counts only: a rate or an " +
+			"average has no value in a step nobody visited, so it is read a window at a time with read_total."},
 		"read_total": {Level: "supported"},
 		"search":     declined("Plausible holds no items to search."),
 	}
 }
 
 func metrics() map[string]metricSupport {
-	notACount := func(what string) metricSupport {
+	// Counts are preferred: a rate or an average is offered only where
+	// Plausible gives no counts to take the ratio of, since Mendel divides
+	// two counts itself (contract 2's rule for a metric's kind).
+	divide := func(what, of string) metricSupport {
 		return metricSupport{Level: "unavailable", Aggregations: []string{},
-			Reason: what + " is a rate or an average, and the contract reads counts, uniques and sums."}
+			Reason: what + " is " + of + ", both of which are read as counts here: read them and divide."}
+	}
+	notYet := func(what string) metricSupport {
+		return metricSupport{Level: "unavailable", Aggregations: []string{},
+			Reason: what + " is an average this version does not read."}
 	}
 	return map[string]metricSupport{
-		"pageviews": {Level: "available", Aggregations: []string{"count"}},
-		"visits":    {Level: "available", Aggregations: []string{"count"}},
+		"pageviews": {Level: "available", Kind: "count", Aggregations: []string{"count"}},
+		"visits":    {Level: "available", Kind: "count", Aggregations: []string{"count"}},
 		// Any other event name is read as a goal configured on the site
 		// (plan, below). The contract has no way to declare an open family
 		// of metrics, so that rule is in README.md and not in the manifest.
-		"events": {Level: "available", Aggregations: []string{"count"}},
-		"visitors":        {Level: "available", Aggregations: []string{"unique"}, Uniqueness: visitorsUniqueness},
-		"bounce_rate":     notACount("bounce_rate"),
-		"visit_duration":  notACount("visit_duration"),
-		"views_per_visit": notACount("views_per_visit"),
-		"conversion_rate": notACount("conversion_rate"),
-		"scroll_depth":    notACount("scroll_depth"),
-		"time_on_page":    notACount("time_on_page"),
+		"events":   {Level: "available", Kind: "count", Aggregations: []string{"count"}},
+		"visitors": {Level: "available", Kind: "people", Aggregations: []string{"unique"}, Uniqueness: visitorsUniqueness},
+		// Plausible reports no count of bounces and no total of time, so
+		// these two are only to be had as the rate and the average it
+		// computes over the window asked for.
+		"bounce_rate":     {Level: "available", Kind: "rate", Per: "visit", Aggregations: []string{"value"}},
+		"visit_duration":  {Level: "available", Kind: "average", Per: "visit", Unit: "seconds", Aggregations: []string{"value"}},
+		"views_per_visit": divide("views_per_visit", "pageviews divided by visits"),
+		"conversion_rate": divide("conversion_rate", "a goal's unique visitors divided by visitors"),
+		"scroll_depth":    notYet("scroll_depth"),
+		"time_on_page":    notYet("time_on_page"),
 		"total_revenue": {Level: "unavailable", Aggregations: []string{},
-			Reason: "Revenue goals are not read in contract 1: a sum of money needs its currency declared."},
+			Reason: "Revenue goals are not read yet: a sum of money needs its currency declared, per goal."},
 	}
 }
 
@@ -259,6 +269,12 @@ func plan(m *measure, f *filter) (metric string, filters []any, refused string) 
 			return "", nil, "visitors is read with unique: it is already a count of people, per the manifest"
 		}
 		metric = "visitors"
+	case metrics()[m.Event].Kind == "rate" || metrics()[m.Event].Kind == "average":
+		if m.Aggregation != "value" {
+			return "", nil, fmt.Sprintf("%s is a %s and is read as its value, not %s: it does not add up",
+				m.Event, metrics()[m.Event].Kind, m.Aggregation)
+		}
+		metric = m.Event
 	case metrics()[m.Event].Level == "unavailable":
 		return "", nil, fmt.Sprintf("%s is unavailable: %s", m.Event, metrics()[m.Event].Reason)
 	default:
@@ -303,15 +319,26 @@ func (a *api) readTotal(ctx context.Context, c call) result {
 	if !c.Window.Start.IsZero() {
 		dr = dateRange(c.Window)
 	}
-	res, refused, err := a.post(ctx, query{Metrics: []string{metric}, DateRange: dr, Filters: filters})
+	// A rate or an average is asked with the visits it is per, because over
+	// a window nobody visited it has no value, and Plausible answers 0.
+	perVisit := isPerVisit(metric)
+	asked := []string{metric}
+	if perVisit {
+		asked = append(asked, "visits")
+	}
+	res, refused, err := a.post(ctx, query{Metrics: asked, DateRange: dr, Filters: filters})
 	if err != nil {
 		return result{Verb: verb, Failed: err.Error()}
 	}
 	if refused != "" {
 		return result{Verb: verb, Refused: refused}
 	}
-	if len(res.Results) != 1 || len(res.Results[0].Metrics) != 1 {
+	if len(res.Results) != 1 || len(res.Results[0].Metrics) != len(asked) {
 		return result{Verb: verb, Failed: fmt.Sprintf("an aggregate query answered %d rows, not one", len(res.Results))}
+	}
+	if perVisit && res.Results[0].Metrics[1] == 0 {
+		return result{Verb: verb, Refused: fmt.Sprintf("nobody visited in the window, so there is no %s: a %s over "+
+			"no visits has no value, and is not zero", metric, metrics()[metric].Kind)}
 	}
 	return result{Verb: verb, Total: &reading{Value: res.Results[0].Metrics[0]}}
 }
@@ -326,6 +353,10 @@ func (a *api) readSeries(ctx context.Context, c call) result {
 	metric, filters, refused := plan(c.Measure, c.Filter)
 	if refused != "" {
 		return result{Verb: verb, Refused: refused}
+	}
+	if isPerVisit(metric) {
+		return result{Verb: verb, Refused: fmt.Sprintf("%s is a %s, which has no value in a step nobody visited; "+
+			"read it a window at a time with read_total", metric, metrics()[metric].Kind)}
 	}
 	if c.Window == nil || c.Window.Start.IsZero() || !c.Window.End.After(c.Window.Start) {
 		return result{Verb: verb, Refused: "the call needs a window with a start, and an end after it"}
@@ -384,4 +415,10 @@ func sortSeries(s []seriesPoint) {
 			s[j], s[j-1] = s[j-1], s[j]
 		}
 	}
+}
+
+// isPerVisit reports whether a metric is a rate or an average per visit.
+func isPerVisit(metric string) bool {
+	k := metrics()[metric].Kind
+	return (k == "rate" || k == "average") && metrics()[metric].Per == "visit"
 }

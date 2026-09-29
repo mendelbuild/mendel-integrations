@@ -16,12 +16,12 @@ type searcher struct {
 }
 
 func (f searcher) manifest() *wp.CapabilityManifest {
-	m := &wp.CapabilityManifest{Contract: wp.DraftContractVersion,
+	m := &wp.CapabilityManifest{Contract: wp.ContractVersion,
 		Wrapper: wp.WrapperProvenance{Version: "1.0", SpecSource: "https://search.example/api", SpecHash: "sha256:x"},
 		Verbs:   map[wp.Verb]wp.VerbSupport{}, Metrics: map[string]wp.MetricSupport{}, FilterDimensions: []string{"domain"},
 		Venue: "read_only", Idempotency: "none", Entitlements: map[string]any{}, StoragePolicy: "References only.",
 		SearchHorizon: "a year"}
-	for _, v := range wp.VerbsOf(wp.DraftContractVersion) {
+	for _, v := range wp.ContractVerbs() {
 		m.Verbs[v] = wp.VerbSupport{Level: wp.VerbDeclined, Reason: "not here"}
 	}
 	m.Verbs[wp.VerbProbe] = wp.VerbSupport{Level: wp.VerbSupported}
@@ -35,7 +35,7 @@ func (f searcher) run(_ context.Context, req wp.WrapperRequest) (wp.WrapperRespo
 		r := wp.VerbResult{Verb: c.Verb}
 		m := f.manifest()
 		switch {
-		case req.Contract != wp.DraftContractVersion:
+		case req.Contract != wp.ContractVersion:
 			r.Refused = "draft only"
 		case m.Verbs[c.Verb].Level == wp.VerbDeclined || m.Verbs[c.Verb].Level == "":
 			r.Refused = "not here"
@@ -71,7 +71,7 @@ func (f searcher) run(_ context.Context, req wp.WrapperRequest) (wp.WrapperRespo
 }
 
 func runSearcher(f searcher) Report {
-	d := wp.Description{Tool: wp.Tool{Slug: "search", Name: "Search"}, Version: "1.0", Contract: wp.DraftContractVersion,
+	d := wp.Description{Tool: wp.Tool{Slug: "search", Name: "Search"}, Version: "1.0", Contract: wp.ContractVersion,
 		Image: "s:dev", Command: []string{"/s"}, SpecSource: "https://search.example/api",
 		Connection: wp.ConnectionSpec{Credentials: []wp.Field{{Name: "SEARCH_KEY", Label: "Key"}}},
 		Claims:     map[string]string{"search": "supported"}}

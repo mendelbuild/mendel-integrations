@@ -56,7 +56,7 @@ func do(t *testing.T, f *fakeTavily, config map[string]any, calls ...wp.VerbCall
 	t.Helper()
 	srv := httptest.NewServer(f)
 	defer srv.Close()
-	body, _ := json.Marshal(wp.WrapperRequest{Contract: wp.DraftContractVersion, Calls: calls,
+	body, _ := json.Marshal(wp.WrapperRequest{Contract: wp.ContractVersion, Calls: calls,
 		Connection: wp.Connection{Endpoint: srv.URL, Credentials: map[string]string{credentialName: key}, Config: config}})
 	var out bytes.Buffer
 	if err := run(context.Background(), bytes.NewReader(body), &out, srv.Client()); err != nil {
@@ -73,7 +73,7 @@ func TestProbeReadsTheKeysUsageAndSpendsNothing(t *testing.T) {
 	f := &fakeTavily{}
 	resp, out := do(t, f, nil, wp.VerbCall{Verb: wp.VerbProbe})
 	m := resp.Results[0].Manifest
-	if why := m.CheckAs(wp.DraftContractVersion); why != "" {
+	if why := m.Check(); why != "" {
 		t.Fatalf("the manifest is refused: %s", why)
 	}
 	if m.Entitlements["plan"] != "Researcher" || f.last != nil {
@@ -143,7 +143,7 @@ func TestWrapperJSONAgreesWithWhatTheWrapperAnswers(t *testing.T) {
 	if strings.Join(entrypoint, " ") != strings.Join(d.Command, " ") || len(entrypoint) == 0 {
 		t.Errorf("command %q, ENTRYPOINT %q", d.Command, entrypoint)
 	}
-	if d.Version != wrapperVersion || d.Contract != wp.DraftContractVersion || d.SpecSource != specSource ||
+	if d.Version != wrapperVersion || d.Contract != wp.ContractVersion || d.SpecSource != specSource ||
 		d.Connection.Credentials[0].Name != credentialName {
 		t.Errorf("wrapper.json disagrees with the code: %+v", d)
 	}

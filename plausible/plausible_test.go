@@ -69,7 +69,7 @@ func do(t *testing.T, fake *fakePlausible, calls ...map[string]any) (wrapperprot
 	server := fake.serve()
 	defer server.Close()
 	req := map[string]any{
-		"contract": "1",
+		"contract": contractVersion,
 		"connection": map[string]any{
 			"credentials": map[string]string{"PLAUSIBLE_API_KEY": "key-123"},
 			"account_id":  "pong.example", "endpoint": server.URL,
@@ -115,8 +115,11 @@ func TestProbeAnswersAManifestMendelAccepts(t *testing.T) {
 	if u := m.Metrics["visitors"].Uniqueness; !strings.Contains(u, "two visitors") || !strings.Contains(u, "metrics-definitions") {
 		t.Errorf("visitors' uniqueness is not Plausible's, cited: %q", u)
 	}
-	if m.Metrics["bounce_rate"].Level != wrapperprotocol.MetricUnavailable || m.Metrics["bounce_rate"].Reason == "" {
-		t.Error("a rate is declared unavailable, with a reason")
+	if b := m.Metrics["bounce_rate"]; b.Kind != wrapperprotocol.KindRate || b.Per != "visit" || b.Aggregations[0] != "value" {
+		t.Errorf("bounce rate is a rate per visit, read as its value: %+v", b)
+	}
+	if v := m.Metrics["views_per_visit"]; v.Level != wrapperprotocol.MetricUnavailable || !strings.Contains(v.Reason, "divide") {
+		t.Errorf("a ratio of two counts is left for Mendel to divide: %+v", v)
 	}
 	if m.Wrapper.SpecSource != specSource || m.Wrapper.SpecHash != specHash() || !strings.HasPrefix(m.Wrapper.SpecHash, "sha256:") {
 		t.Errorf("provenance: %+v", m.Wrapper)
@@ -230,9 +233,12 @@ func TestRefusalsAndFailures(t *testing.T) {
 			map[string]any{"verb": "probe"}, "", "no site pong.example"},
 		{"rate limited", []recorded{{429, `{}`}},
 			map[string]any{"verb": "probe"}, "", "600 requests an hour"},
-		{"a rate asked for", nil,
+		{"a rate asked for as a count", nil,
 			map[string]any{"verb": "read_total", "measure": map[string]string{"event": "bounce_rate", "aggregation": "count"},
-				"window": span(day0, day1)}, "unavailable", ""},
+				"window": span(day0, day1)}, "does not add up", ""},
+		{"a ratio of two counts asked for", nil,
+			map[string]any{"verb": "read_total", "measure": map[string]string{"event": "views_per_visit", "aggregation": "value"},
+				"window": span(day0, day1)}, "divide", ""},
 		{"visitors counted", nil,
 			map[string]any{"verb": "read_total", "measure": map[string]string{"event": "visitors", "aggregation": "count"},
 				"window": span(day0, day1)}, "read with unique", ""},
@@ -262,7 +268,7 @@ func TestRefusalsAndFailures(t *testing.T) {
 
 func TestAnotherContractIsAnsweredAndNotActedOn(t *testing.T) {
 	var out bytes.Buffer
-	in := `{"contract":"2","connection":{},"calls":[{"verb":"probe"},{"verb":"read_total"}]}`
+	in := `{"contract":"3","connection":{},"calls":[{"verb":"probe"},{"verb":"read_total"}]}`
 	if err := run(context.Background(), strings.NewReader(in), &out, http.DefaultClient); err != nil {
 		t.Fatal(err)
 	}
@@ -270,7 +276,7 @@ func TestAnotherContractIsAnsweredAndNotActedOn(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, why := resp.Answer(0); !strings.Contains(why, `sent "2"`) {
+	if _, why := resp.Answer(0); !strings.Contains(why, `sent "3"`) {
 		t.Errorf("answer %q", why)
 	}
 	if err := run(context.Background(), strings.NewReader("not json"), &out, http.DefaultClient); err == nil {
@@ -330,5 +336,38 @@ func TestWrapperJSONAgreesWithWhatTheWrapperAnswers(t *testing.T) {
 		if claimed != "declined" && got.Level == "declined" {
 			t.Errorf("wrapper.json claims %s is %s; the probe declines it", verb, claimed)
 		}
+	}
+}
+
+// A rate over a window nobody visited has no value, and is refused rather
+// than read as the 0 Plausible answers; and a rate is never a series.
+func TestARateOverNoVisitsIsRefusedAndIsNeverASeries(t *testing.T) {
+	fake := &fakePlausible{t: t, responses: []recorded{
+		{200, `{"results":[{"metrics":[42.5,40],"dimensions":[]}],"meta":{},"query":{}}`},
+		{200, `{"results":[{"metrics":[0,0],"dimensions":[]}],"meta":{},"query":{}}`},
+	}}
+	bounce := map[string]string{"event": "bounce_rate", "aggregation": "value"}
+	resp, err := do(t, fake, map[string]any{"verb": "read_total", "measure": bounce, "window": span(day0, day1)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res, why := resp.Answer(0); why != "" || res.Total.Value != 42.5 {
+		t.Fatalf("a bounce rate over forty visits: %+v %s", res, why)
+	}
+	if m, _ := json.Marshal(fake.queries[0]["metrics"]); string(m) != `["bounce_rate","visits"]` {
+		t.Errorf("a rate is asked with the visits it is per: %s", m)
+	}
+	resp, _ = do(t, fake, map[string]any{"verb": "read_total", "measure": bounce, "window": span(day0, day1)})
+	if res, _ := resp.Answer(0); !strings.Contains(res.Refused, "nobody visited") {
+		t.Errorf("a rate over no visits: %+v", res)
+	}
+	resp, _ = do(t, fake, map[string]any{"verb": "read_total", "window": span(day0, day1),
+		"measure": map[string]string{"event": "bounce_rate", "aggregation": "sum"}})
+	if res, _ := resp.Answer(0); !strings.Contains(res.Refused, "does not add up") {
+		t.Errorf("a rate read as a sum: %+v", res)
+	}
+	resp, _ = do(t, fake, map[string]any{"verb": "read_series", "measure": bounce, "window": span(day0, day1), "granularity": "day"})
+	if res, _ := resp.Answer(0); !strings.Contains(res.Refused, "read_total") {
+		t.Errorf("a rate as a series: %+v", res)
 	}
 }

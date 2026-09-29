@@ -126,7 +126,9 @@ fi
 date -u +%Y-%m-%d > "$WORK/traffic-day"
 fi
 # What the suite should read back, over the day the traffic was sent.
-printf '{"pageviews/count": 37, "events/count": 37, "visitors/unique": 11, "visits/count": 11}\n' > "$WORK/expected.json"
+# Every visit saw at least three pages, so none bounced: the bounce rate is
+# 0, and a real 0, not the one Plausible answers for a window with no visits.
+printf '{"pageviews/count": 37, "events/count": 37, "visitors/unique": 11, "visits/count": 11, "bounce_rate/value": 0}\n' > "$WORK/expected.json"
 DAY=$(cat "$WORK/traffic-day")
 
 cat <<EOF

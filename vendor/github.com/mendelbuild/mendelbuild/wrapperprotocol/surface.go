@@ -8,16 +8,8 @@ import (
 	"time"
 )
 
-// Contract 2-draft: the action surface and search, and connecting an account
-// through the tool's own authorization (doc 35 §6, and the wrapper-vetting
-// spike recorded in §19 on 2026-09-28).
-//
-// Contract 1 carries a data source and nothing else: its calls and answers
-// have fields for read_series and read_total only. The draft adds what the
-// spike's first publisher (Mastodon) and search tool (Tavily) need, and is
-// spoken only by the conformance harness in the mendel-integrations
-// repository until the spike settles it. Mendel's server speaks contract 1,
-// and nothing here changes what it accepts.
+// Authorize, the action surface and search: what contract 2 added to a
+// data source's contract (doc 35 §6; the wrapper-vetting spike, §19).
 //
 // Two decisions shape it (§19, 2026-09-28):
 //
@@ -30,25 +22,6 @@ import (
 //     Mendel moves it into encrypted storage on arrival and keeps and logs
 //     responses only Redacted. ParseWrapperResponse refuses credentials on
 //     any other verb, and never quotes a wrapper's output that may hold them.
-
-// DraftContractVersion is the draft's version string. A wrapper written
-// against the draft says so in its wrapper.json and its manifest.
-const DraftContractVersion = "2-draft"
-
-// VerbAuthorize connects an account through the tool's own authorization.
-const VerbAuthorize Verb = "authorize"
-
-// VerbsOf is every verb of a contract version, in the order its manifest
-// answers them. Nil for a version this package does not know.
-func VerbsOf(contract string) []Verb {
-	switch contract {
-	case ContractVersion:
-		return ContractVerbs()
-	case DraftContractVersion:
-		return append([]Verb{VerbAuthorize}, ContractVerbs()...)
-	}
-	return nil
-}
 
 // Steps of authorize.
 //
@@ -162,8 +135,9 @@ func (m *CapabilityManifest) readsNumbers() bool {
 	return false
 }
 
-// checkDraft is the draft's part of CheckAs.
-func (m *CapabilityManifest) checkDraft() string {
+// checkSurface is authorize's, the action surface's and search's part of
+// Check.
+func (m *CapabilityManifest) checkSurface() string {
 	if m.Verbs[VerbAuthorize].Level != VerbDeclined {
 		a := m.Authorization
 		if a == nil {
