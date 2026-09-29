@@ -1,0 +1,17 @@
+You are fixing an External Tool Wrapper for Tavily, for Mendel, in tavily/.
+The workspace holds your earlier work; GUIDE.md, the protocol in
+vendor/github.com/mendelbuild/mendelbuild/wrapperprotocol/ and the tool's
+documentation in spec/tavily/ are as before.
+
+Mendel built the wrapper and ran the conformance suite against a real Tavily
+account. 20 checks passed.
+
+What did not pass:
+
+- FAIL search: a windowed search answers only what the window holds: outside 2026-08-30..2026-09-28: https://www.urbanpro.com/digital-marketing/web-analytics has no date, so nothing says it is in the window; https://www.vivantatechnologies.com/web-analytics has no date, so nothing says it is in the window; https://webanalytics.wordpress.com/category/web-analytics has no date, so nothing says it is in the window
+- FAIL search: a search with no query is refused: it was not refused
+- FAIL search: a filter on a dimension not declared is refused: it was not refused
+
+Fix the wrapper so these pass, keeping everything else passing. If a check
+shows the wrapper.json and the wrapper disagree, change whichever is wrong.
+The unit tests should still pass.

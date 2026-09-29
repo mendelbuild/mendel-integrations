@@ -1,0 +1,27 @@
+You are writing an External Tool Wrapper for Tavily (https://tavily.com), for Mendel.
+
+Read GUIDE.md first: what a wrapper is, the wire protocol, wrapper.json, and what
+Mendel checks. The protocol's Go types are the source of truth, in
+vendor/github.com/mendelbuild/mendelbuild/wrapperprotocol/ (protocol.go, draft.go,
+description.go); import that package rather than restating it. Tavily's own API
+documentation, fetched today, is in spec/tavily/. Write against it, not against
+what you remember of the API, and cite what you used, with the date, in
+tavily/README.md.
+
+Write the wrapper in tavily/ as package main. It is a search tool: Mendel searches with it (probe and search, and every other verb declared absent with its reason). It speaks contract
+"2-draft". It will be run against Tavily's hosted API, on an account whose every search spends credits.
+
+- tavily/wrapper.json: tool.slug "tavily", version "0.1.0", contract "2-draft",
+  image "mendel-tool-tavily:dev", a command equal to the Dockerfile's ENTRYPOINT,
+  the connection a person supplies (the API key as a credential), and your claims.
+- tavily/Dockerfile, as GUIDE.md describes.
+- Standard library and the wrapperprotocol package only. It must build with
+  `go build -mod=vendor ./tavily`.
+- Unit tests against a fake server (net/http/httptest). Check your work: run
+  `go build ./tavily` and `go test ./tavily` and make both pass (the module is
+  vendored; GOFLAGS already says so). Never call the real API from a test, and
+  do not try to reach it at all: there is no key here.
+
+When you finish, Mendel builds the wrapper and runs its conformance suite
+against a real Tavily account. If anything does not pass, you will be told
+what, and asked to fix it.

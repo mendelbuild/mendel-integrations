@@ -1,0 +1,44 @@
+{
+  "tool": {
+    "slug": "plausible",
+    "name": "Plausible Analytics",
+    "homepage": "https://plausible.io",
+    "categories": ["know what visitors do"]
+  },
+  "version": "0.1.0",
+  "contract": "1",
+  "image": "mendel-tool-plausible:dev",
+  "command": ["/plausible"],
+  "spec_source": "https://plausible.io/docs/stats-api",
+  "connection": {
+    "account": {
+      "label": "Site ID",
+      "help": "Domain of the site as added to your Plausible account (e.g. example.com)."
+    },
+    "credentials": [
+      {"name": "PLAUSIBLE_API_KEY", "label": "Stats API key",
+       "help": "Create one under your team's Settings \u2192 API Keys, choosing \"Stats API\"."}
+    ],
+    "endpoint": {
+      "label": "Endpoint (self-hosted only)",
+      "help": "Base URL of your self-hosted Plausible Community Edition instance, e.g. https://plausible.example.com. Leave blank for plausible.io."
+    }
+  },
+  "claims": {
+    "probe": "supported",
+    "read_series": "partial",
+    "read_total": "supported",
+    "describe_shape": "declined",
+    "limits": "declined",
+    "draft": "declined",
+    "publish": "declined",
+    "status": "declined",
+    "append_update": "declined",
+    "retract": "declined",
+    "read_back": "declined",
+    "read_metrics": "declined",
+    "set_cap": "declined",
+    "list_owned": "declined",
+    "search": "declined"
+  }
+}

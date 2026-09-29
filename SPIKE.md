@@ -21,7 +21,58 @@ was seen, what it means for the contract, and what, if anything, was done.
 | Mastodon wrapper (publisher, OAuth) | 27 of 27 checks pass live against @mdl_test on mastodon.social (0.1.1); two warnings: `complete` needs a person, and `revoke` is run only when asked |
 | Tavily wrapper (search) | 24 of 24 checks pass live (two basic searches, 2 credits) |
 | Venue-supplied expected values (finding 5) | Built: `-expect`; the Plausible venue writes its truth, and a consistently wrong wrapper now fails |
-| Generation test | Last |
+| Generation test (`spike/generate/`) | Done: both tools generated blind, each passing after one repair round, $4.36 in all; see "The generation test" |
+
+## The generation test
+
+The question the spike exists to answer: can an agent write a wrapper from a
+spec, with the conformance suite as its test? Run with
+`spike/generate/generate.py`, on 2026-09-28:
+
+- **The agent** was Mendel's own code-generation executor
+  (`internal/codegen/executor`, its own system prompt and tools) on
+  `claude-sonnet-5`, driven by `spike/generate/driver/main.go.txt`, in a
+  container holding the workspace and nothing else. The Anthropic key reached
+  the driver on stdin and was never in the agent's environment (checked: its
+  shell counted zero Anthropic variables and could not see the host).
+- **Blind:** the workspace held the contract (vendored), the authoring guide
+  with every line naming a hand-written wrapper removed, and the tool's
+  documentation fetched that day (`spike/generate/spec/`). No web, no key, no
+  hand-written wrapper.
+- **The loop was Mendel's:** write and unit-test; the suite runs against the
+  real venue with the key given to the suite alone; what did not pass goes
+  back as a new run on the same workspace; at most three repairs.
+
+| Tool | Round 0 | Repair 1 | Rounds | Spend | Time | Final |
+|---|---|---|---|---|---|---|
+| Plausible (contract 1, local CE venue with known truth) | 37 pass, 3 fail | 40 pass | 1 repair | $1.58 | 10.6 min | 40/40 |
+| Tavily (contract 2-draft, live, 4 credits in all) | 20 pass, 3 fail, 1 warn | 23 pass, 1 warn | 1 repair | $2.78 | 13.3 min | 23/23 + 1 warn |
+
+What round 0 got wrong is exactly what the suite exists to catch:
+Plausible's series left out empty steps (the API omits empty buckets; the
+contract is one point per step), and Tavily's windowed search let undated
+results through, and did not refuse an empty query or an unknown filter before
+spending anything. One round of the suite's sentences fixed each.
+
+The generated code is kept, with its prompts and reports, in
+`spike/generate/testdata/generated/`. Neither wrapper special-cases the venue
+or the suite. Both cite their spec with dates; both have real unit tests (15
+and 19); both are larger than the hand-written ones (about 1,100 lines each,
+against roughly 560 and 350). Tavily's is better than the hand-written one in
+one respect: its storage policy notices that Tavily's terms license the
+search *query* itself to Tavily.
+
+**And the generated Plausible wrapper is wrong in a way the suite passed.**
+See finding 14.
+
+**Answer, for now:** yes, with the suite as the loop's judge, an agent writes
+a working wrapper from a fed-in spec in one repair round for a few dollars --
+for a data source with an OpenAPI-less prose spec as well as a search tool
+with an OpenAPI document. What stands between that and trusting one unread is
+finding 14: the suite judges the protocol, and a wrapper can keep the
+protocol and still report a wrong kind of number. A publisher was not
+generated (the only venue is a real account, and each run posts), which is
+the next thing to try once the suite can judge meaning as well as form.
 
 ## Findings
 
@@ -140,3 +191,27 @@ dates are its estimate of when a page was published or last updated, and a
 windowed search has to drop what it cannot date. So `search` is partial, and
 the harness checks every result of a windowed search is dated inside it; an
 undated result fails rather than passing on trust.
+
+**14. A generated wrapper reported rates as sums, and the suite passed it.**
+The generated Plausible wrapper declares `bounce_rate`, `views_per_visit` and
+`visit_duration` available with aggregation `sum`, and reads them as 0, 3.36
+and 1 -- a percentage, a ratio and an average, "summed". Every check passed:
+the numbers are consistent with themselves, and the venue's truth covered only
+the four counts. Mendel would have recorded "bounce rate, summed: 0" as a Key
+Result reading. The hand-written wrapper declines the three, because the
+contract reads counts, uniques and sums, and a person reading the manifest
+would have caught it; the suite did not. The suite checks form, and needs to
+check meaning where it can:
+- *Additivity.* A count or a sum over a window equals the sum of it over the
+  window's parts; a rate does not. Checking that for every metric read as
+  `count` or `sum` catches this -- but only against a venue with traffic on
+  more than one day or hour, and the local venue's events all arrive at once
+  (Plausible's event endpoint cannot backdate). The venue needs its traffic
+  spread over time, most likely by writing events with timestamps into its
+  own ClickHouse.
+- *The venue's truth for every metric,* not just the counts: a venue that
+  sent its traffic knows its bounce rate, and would refuse to accept a "sum"
+  of it.
+- *The contract could say what a metric is* -- a count of events, a count of
+  people, a sum of a value, a rate, an average -- so "rate read as sum" is
+  refused at the manifest, before any number is read.

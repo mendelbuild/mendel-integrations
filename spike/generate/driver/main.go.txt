@@ -1,0 +1,84 @@
+// Command gendriver runs Mendel's own code-generation executor once, for the
+// wrapper-vetting spike's generation test (mendel-integrations SPIKE.md). It
+// is spike tooling, kept out of Mendel's build by living under a dot
+// directory, and a copy of it is recorded in mendel-integrations.
+//
+// It runs inside a container that holds only the workspace. The Anthropic key
+// arrives on stdin and is held in memory alone -- never in the environment or
+// on disk -- because the executor's Bash tool runs with this process's
+// environment, and the agent must not be able to read the key.
+//
+//	gendriver -dir /work -prompt /prompt.txt -limit 3 -out /work/.round.json < key
+package main
+
+import (
+	"bufio"
+	"context"
+	"encoding/json"
+	"flag"
+	"fmt"
+	"os"
+	"strings"
+
+	"github.com/mendelbuild/mendelbuild/internal/codegen/executor"
+	"github.com/mendelbuild/mendelbuild/internal/domain"
+)
+
+// price is claude-sonnet-5's list price, USD per million tokens (CLAUDE.md,
+// verified 2026-08-27): input 2, output 10, cache reads 0.1x input, cache
+// writes 1.25x. An estimate from list prices, as every hosting figure is.
+func price(t domain.TokenCounts) float64 {
+	return (float64(t.InputTokens)*2 + float64(t.OutputTokens)*10 +
+		float64(t.CacheReadTokens)*0.2 + float64(t.CacheWriteTokens)*2.5) / 1e6
+}
+
+func main() {
+	dir := flag.String("dir", "/work", "the workspace")
+	promptFile := flag.String("prompt", "/prompt.txt", "the task")
+	limit := flag.Float64("limit", 3, "the spend ceiling for this run, USD")
+	out := flag.String("out", "", "where to write what the run did")
+	flag.Parse()
+
+	line, _ := bufio.NewReader(os.Stdin).ReadString('\n')
+	key := strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(line), "ANTHROPIC_API_KEY="))
+	if key == "" {
+		fmt.Fprintln(os.Stderr, "gendriver: no key on stdin")
+		os.Exit(2)
+	}
+	prompt, err := os.ReadFile(*promptFile)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "gendriver:", err)
+		os.Exit(2)
+	}
+
+	e := executor.New(key, *dir).WithSpendLimit(*limit, price).WithEventHandler(func(ev executor.Event) {
+		switch ev.Type {
+		case executor.EventToolCall:
+			fmt.Fprintf(os.Stderr, "tool %s\n", ev.ToolName)
+		case executor.EventError:
+			fmt.Fprintf(os.Stderr, "error %v\n", ev.Error)
+		}
+	})
+	res, runErr := e.Run(context.Background(), executor.SystemPrompt(), string(prompt))
+
+	record := map[string]any{"spend_usd": e.SpendUSD()}
+	if res != nil {
+		record["success"] = res.Success
+		record["stopped_for_budget"] = res.StoppedForBudget
+		record["exceeded_rounds"] = res.ExceededRounds
+		record["api_rounds"] = res.Stats.APIRounds
+		record["tool_calls"] = res.Stats.ToolCalls
+		record["tokens"] = res.Stats.Tokens()
+		record["model"] = res.Stats.Model
+		record["seconds"] = res.Stats.EndTime.Sub(res.Stats.StartTime).Seconds()
+		record["summary"] = res.Output
+	}
+	if runErr != nil {
+		record["error"] = runErr.Error()
+	}
+	body, _ := json.MarshalIndent(record, "", "  ")
+	if *out != "" {
+		_ = os.WriteFile(*out, body, 0o644)
+	}
+	fmt.Println(string(body))
+}

@@ -1,0 +1,42 @@
+{
+  "tool": "tavily",
+  "model": "claude-sonnet-5",
+  "agent": "mendel internal/codegen/executor via gendriver",
+  "workspace": "/tmp/mendel-spike-generate/tavily-20260928-224006",
+  "rounds": [
+    {
+      "round": 0,
+      "cost_usd": 2.1289,
+      "api_rounds": 60,
+      "tool_calls": 65,
+      "wall_seconds": 656.4,
+      "agent_error": null,
+      "stopped_for_budget": false,
+      "built": true,
+      "counts": {
+        "pass": 20,
+        "warn": 1,
+        "fail": 3
+      },
+      "passed": false
+    },
+    {
+      "round": 1,
+      "cost_usd": 0.6511,
+      "api_rounds": 35,
+      "tool_calls": 39,
+      "wall_seconds": 143.7,
+      "agent_error": null,
+      "stopped_for_budget": false,
+      "built": true,
+      "counts": {
+        "pass": 23,
+        "warn": 1
+      },
+      "passed": true
+    }
+  ],
+  "passed": true,
+  "repair_rounds": 1,
+  "cost_usd": 2.78
+}

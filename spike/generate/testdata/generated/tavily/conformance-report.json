@@ -1,0 +1,299 @@
+{
+  "tool": "tavily",
+  "version": "0.1.0",
+  "at": "2026-09-29T05:53:33.342552Z",
+  "checks": [
+    {
+      "name": "a request for another contract version is answered without acting",
+      "verb": "probe",
+      "outcome": "pass",
+      "detail": "failed: this wrapper speaks contract \"2-draft\"; the request is contract \"0-conformance\"",
+      "calls": 1,
+      "elapsed_ns": 555199000
+    },
+    {
+      "name": "probe answers a manifest the protocol accepts",
+      "verb": "probe",
+      "outcome": "pass",
+      "calls": 1,
+      "elapsed_ns": 820088833
+    },
+    {
+      "name": "the manifest answers as the wrapper.json describes it",
+      "verb": "probe",
+      "outcome": "warn",
+      "detail": "the manifest cites \"https://docs.tavily.com/api-reference/endpoint/search, https://docs.tavily.com/api-reference/endpoint/usage, https://docs.tavily.com/guides/api-credits, https://docs.tavily.com/guides/rate-limits, https://tavily.com/terms\" as its spec; wrapper.json cites \"https://docs.tavily.com/api-reference/endpoint/search\"",
+      "calls": 0,
+      "elapsed_ns": 0
+    },
+    {
+      "name": "nothing wrapper.json claims is declined against this account",
+      "verb": "probe",
+      "outcome": "pass",
+      "calls": 0,
+      "elapsed_ns": 0
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "authorize",
+      "outcome": "pass",
+      "detail": "Tavily connects with a bearer API key a person copies from app.tavily.com; there is no OAuth-style exchange for this wrapper to drive",
+      "calls": 1,
+      "elapsed_ns": 27289666
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "describe_shape",
+      "outcome": "pass",
+      "detail": "Tavily is a search tool with no External Asset Kind for describe_shape to describe",
+      "calls": 1,
+      "elapsed_ns": 10496000
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "limits",
+      "outcome": "pass",
+      "detail": "Tavily's limits are fixed by plan and documented (spec/tavily/rate-limits.md), not a per-call value this wrapper could read; probe's entitlements carry what /usage reports instead",
+      "calls": 1,
+      "elapsed_ns": 7898917
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "draft",
+      "outcome": "pass",
+      "detail": "Tavily is a search tool, not a publisher; it has nothing for draft to create",
+      "calls": 1,
+      "elapsed_ns": 6006084
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "publish",
+      "outcome": "pass",
+      "detail": "Tavily is a search tool, not a publisher; it has nothing for publish to make live",
+      "calls": 1,
+      "elapsed_ns": 5589458
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "status",
+      "outcome": "pass",
+      "detail": "Tavily is a search tool, not a publisher; there is no asset for status to report on",
+      "calls": 1,
+      "elapsed_ns": 5085625
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "append_update",
+      "outcome": "pass",
+      "detail": "Tavily is a search tool, not a publisher; there is no asset for append_update to update",
+      "calls": 1,
+      "elapsed_ns": 13002584
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "retract",
+      "outcome": "pass",
+      "detail": "Tavily is a search tool, not a publisher; there is no asset for retract to take down",
+      "calls": 1,
+      "elapsed_ns": 5524375
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "read_back",
+      "outcome": "pass",
+      "detail": "Tavily is a search tool, not a publisher; there is no asset for read_back to read",
+      "calls": 1,
+      "elapsed_ns": 71658917
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "read_metrics",
+      "outcome": "pass",
+      "detail": "Tavily is a search tool, not a publisher; there is no asset for read_metrics to read a metric of",
+      "calls": 1,
+      "elapsed_ns": 6426333
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "set_cap",
+      "outcome": "pass",
+      "detail": "Tavily is a search tool, not a publisher; there is no cap for set_cap to set",
+      "calls": 1,
+      "elapsed_ns": 5417084
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "list_owned",
+      "outcome": "pass",
+      "detail": "Tavily is a search tool, not a publisher; there is nothing owned for list_owned to list",
+      "calls": 1,
+      "elapsed_ns": 4521417
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "read_series",
+      "outcome": "pass",
+      "detail": "Tavily exposes no analytics event stream to bucket into a series; this wrapper is a search tool, not a data source",
+      "calls": 1,
+      "elapsed_ns": 5433000
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "read_total",
+      "outcome": "pass",
+      "detail": "Tavily exposes no analytics event stream to total; this wrapper is a search tool, not a data source",
+      "calls": 1,
+      "elapsed_ns": 5872958
+    },
+    {
+      "name": "a verb outside the contract is refused",
+      "verb": "conformance_not_a_verb",
+      "outcome": "pass",
+      "detail": "tavily does not know verb \"conformance_not_a_verb\"",
+      "calls": 1,
+      "elapsed_ns": 4372833
+    },
+    {
+      "name": "a search answers articles, no more than it was asked for",
+      "verb": "search",
+      "outcome": "pass",
+      "detail": "3 results: www.urbanpro.com, www.vivantatechnologies.com, webanalytics.wordpress.com",
+      "calls": 1,
+      "elapsed_ns": 291995083
+    },
+    {
+      "name": "a windowed search answers only what the window holds",
+      "verb": "search",
+      "outcome": "pass",
+      "detail": "3 results within 2026-08-30..2026-09-28",
+      "calls": 1,
+      "elapsed_ns": 1826741167
+    },
+    {
+      "name": "a search with no query is refused",
+      "verb": "search",
+      "outcome": "pass",
+      "detail": "search needs a query; none was given",
+      "calls": 1,
+      "elapsed_ns": 9840833
+    },
+    {
+      "name": "a filter on a dimension not declared is refused",
+      "verb": "search",
+      "outcome": "pass",
+      "detail": "tavily's search declares no filter dimensions (probe's manifest.filter_dimensions is empty); \"conformance:not_a_dimension\" is not one",
+      "calls": 1,
+      "elapsed_ns": 5819541
+    },
+    {
+      "name": "no credential appears outside the credentials field, on either stream",
+      "outcome": "pass",
+      "detail": "1 credential(s) looked for in 42 outputs",
+      "calls": 0,
+      "elapsed_ns": 0
+    }
+  ],
+  "manifest": {
+    "contract": "2-draft",
+    "wrapper": {
+      "version": "0.1.0",
+      "spec_source": "https://docs.tavily.com/api-reference/endpoint/search, https://docs.tavily.com/api-reference/endpoint/usage, https://docs.tavily.com/guides/api-credits, https://docs.tavily.com/guides/rate-limits, https://tavily.com/terms",
+      "spec_hash": "sha256:799d02149d52787de984725d61588d7f9ccb9d9d9ca3c332bfcceb42acd7566e"
+    },
+    "verbs": {
+      "append_update": {
+        "level": "declined",
+        "reason": "Tavily is a search tool, not a publisher; there is no asset for append_update to update"
+      },
+      "authorize": {
+        "level": "declined",
+        "reason": "Tavily connects with a bearer API key a person copies from app.tavily.com; there is no OAuth-style exchange for this wrapper to drive"
+      },
+      "describe_shape": {
+        "level": "declined",
+        "reason": "Tavily is a search tool with no External Asset Kind for describe_shape to describe"
+      },
+      "draft": {
+        "level": "declined",
+        "reason": "Tavily is a search tool, not a publisher; it has nothing for draft to create"
+      },
+      "limits": {
+        "level": "declined",
+        "reason": "Tavily's limits are fixed by plan and documented (spec/tavily/rate-limits.md), not a per-call value this wrapper could read; probe's entitlements carry what /usage reports instead"
+      },
+      "list_owned": {
+        "level": "declined",
+        "reason": "Tavily is a search tool, not a publisher; there is nothing owned for list_owned to list"
+      },
+      "probe": {
+        "level": "supported"
+      },
+      "publish": {
+        "level": "declined",
+        "reason": "Tavily is a search tool, not a publisher; it has nothing for publish to make live"
+      },
+      "read_back": {
+        "level": "declined",
+        "reason": "Tavily is a search tool, not a publisher; there is no asset for read_back to read"
+      },
+      "read_metrics": {
+        "level": "declined",
+        "reason": "Tavily is a search tool, not a publisher; there is no asset for read_metrics to read a metric of"
+      },
+      "read_series": {
+        "level": "declined",
+        "reason": "Tavily exposes no analytics event stream to bucket into a series; this wrapper is a search tool, not a data source"
+      },
+      "read_total": {
+        "level": "declined",
+        "reason": "Tavily exposes no analytics event stream to total; this wrapper is a search tool, not a data source"
+      },
+      "retract": {
+        "level": "declined",
+        "reason": "Tavily is a search tool, not a publisher; there is no asset for retract to take down"
+      },
+      "search": {
+        "level": "supported"
+      },
+      "set_cap": {
+        "level": "declined",
+        "reason": "Tavily is a search tool, not a publisher; there is no cap for set_cap to set"
+      },
+      "status": {
+        "level": "declined",
+        "reason": "Tavily is a search tool, not a publisher; there is no asset for status to report on"
+      }
+    },
+    "metrics": null,
+    "granularities": null,
+    "filter_dimensions": null,
+    "venue": "read_only",
+    "idempotency": "none: Tavily ranks and returns results fresh on every call; there is no idempotency key and no guarantee that the same query returns the same results later",
+    "entitlements": {
+      "account": {
+        "crawl_usage": 0,
+        "current_plan": "Researcher",
+        "extract_usage": 0,
+        "map_usage": 0,
+        "paygo_limit": null,
+        "paygo_usage": 0,
+        "plan_limit": 1000,
+        "plan_usage": 0,
+        "research_usage": 0,
+        "search_usage": 0
+      },
+      "key": {
+        "crawl_usage": 0,
+        "extract_usage": 0,
+        "limit": null,
+        "map_usage": 0,
+        "research_usage": 0,
+        "search_usage": 0,
+        "usage": 0
+      },
+      "rate_limit_rpm": "100 requests/minute for a Development key, 1,000 for a Production key (spec/tavily/rate-limits.md, fetched 2026-09-29); GET /usage does not say which kind this key is"
+    },
+    "storage_policy": "Tavily's Platform Terms of Service (fetched 2026-09-29, https://tavily.com/terms): §9.2 grants Tavily a worldwide, perpetual, irrevocable licence to collect, host, store, use and otherwise process Customer Input -- which includes the search query -- to provide, support and improve the Services, perform market research, and develop new products; §7 lets Tavily share Customer Input with its affiliates and vendors as needed to provide the Services, including making queries on third-party public web indexes. Tavily makes no commitment to delete a query or its results on request. This wrapper never asks for include_answer, so no LLM-generated answer -- 'AI Functionality' Output under §6, which §6.5 says Tavily and its AI providers may separately retain to train their models -- is ever produced by it.",
+    "search_horizon": "whatever is presently in Tavily's live web index; a query is not bounded to any fixed archive. A call with a window narrows it with Tavily's own start_date/end_date and filter_by_published_date (spec/tavily/search.md), which also drops any result with no detectable published date, since nothing then says it falls in the window; a call with no window leaves every result in, dated or not. Tavily's date filters reach as recent as a day or as far as about a year back."
+  }
+}

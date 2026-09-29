@@ -1,0 +1,44 @@
+plausible 0.1.0, 2026-09-29T06:00:00Z
+
+PASS  probe          a request for another contract version is answered without acting    526ms
+PASS  probe          probe answers a manifest the protocol accepts                     292ms
+PASS  probe          the manifest answers as the wrapper.json describes it               0ms
+PASS  probe          nothing wrapper.json claims is declined against this account        0ms
+PASS  describe_shape a verb declared absent is refused                                  13ms
+PASS  limits         a verb declared absent is refused                                   5ms
+PASS  draft          a verb declared absent is refused                                   4ms
+PASS  publish        a verb declared absent is refused                                   4ms
+PASS  status         a verb declared absent is refused                                   5ms
+PASS  append_update  a verb declared absent is refused                                   5ms
+PASS  retract        a verb declared absent is refused                                   4ms
+PASS  read_back      a verb declared absent is refused                                   4ms
+PASS  read_metrics   a verb declared absent is refused                                   5ms
+PASS  set_cap        a verb declared absent is refused                                   5ms
+PASS  list_owned     a verb declared absent is refused                                   6ms
+PASS  search         a verb declared absent is refused                                   4ms
+PASS  conformance_not_a_verb a verb outside the contract is refused                              4ms
+PASS  read_series    a series is read at a declared granularity                        104ms
+PASS  read_series    a series is read at a declared granularity                         30ms
+PASS  read_series    a series is read at a declared granularity                         33ms
+PASS  read_series    a series is read at a declared granularity                         25ms
+PASS  read_series    a granularity not declared is refused, never substituted            5ms
+PASS  read_series    a filter on a dimension not declared is refused                     6ms
+PASS  read_total     an unavailable metric is refused, never read as zero                5ms
+PASS  read_total     an available metric is read as a total                             43ms
+PASS  read_total     an unavailable metric is refused, never read as zero                5ms
+PASS  read_total     an available metric is read as a total                             27ms
+PASS  read_total     an unavailable metric is refused, never read as zero                6ms
+PASS  read_total     an available metric is read as a total                             23ms
+PASS  read_total     an unavailable metric is refused, never read as zero                5ms
+PASS  read_total     an unavailable metric is refused, never read as zero                4ms
+PASS  read_total     an unavailable metric is refused, never read as zero                4ms
+PASS  read_total     an unavailable metric is refused, never read as zero                3ms
+PASS  read_total     an available metric is read as a total                             27ms
+PASS  read_total     an available metric is read as a total                            188ms
+PASS  read_total     an available metric is read as a total                             18ms
+PASS  read_total     an available metric is read as a total                             14ms
+PASS  read_total     a filter on a dimension not declared is refused                     7ms
+PASS  read_series    a count read as a series sums to the count read as a total         25ms
+PASS  -              no credential appears outside the credentials field, on either stream      0ms
+
+40 pass, 0 fail, 0 warn, 0 untested; 37 calls in 1.511s

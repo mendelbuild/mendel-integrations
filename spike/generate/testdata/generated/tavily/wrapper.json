@@ -1,0 +1,40 @@
+{
+  "tool": {
+    "slug": "tavily",
+    "name": "Tavily",
+    "homepage": "https://tavily.com",
+    "categories": ["search the web"]
+  },
+  "version": "0.1.0",
+  "contract": "2-draft",
+  "image": "mendel-tool-tavily:dev",
+  "command": ["/tavily"],
+  "spec_source": "https://docs.tavily.com/api-reference/endpoint/search",
+  "connection": {
+    "credentials": [
+      {
+        "name": "TAVILY_API_KEY",
+        "label": "API key",
+        "help": "From app.tavily.com's dashboard. Starts with tvly-. Every search spends this account's credits."
+      }
+    ]
+  },
+  "claims": {
+    "probe": "supported",
+    "authorize": "declined",
+    "describe_shape": "declined",
+    "limits": "declined",
+    "draft": "declined",
+    "publish": "declined",
+    "status": "declined",
+    "append_update": "declined",
+    "retract": "declined",
+    "read_back": "declined",
+    "read_metrics": "declined",
+    "set_cap": "declined",
+    "list_owned": "declined",
+    "read_series": "declined",
+    "read_total": "declined",
+    "search": "supported"
+  }
+}

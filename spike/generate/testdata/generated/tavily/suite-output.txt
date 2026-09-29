@@ -1,0 +1,29 @@
+tavily 0.1.0, 2026-09-29T05:53:33Z
+
+PASS  probe          a request for another contract version is answered without acting    555ms
+PASS  probe          probe answers a manifest the protocol accepts                     820ms
+WARN  probe          the manifest answers as the wrapper.json describes it               0ms
+      the manifest cites "https://docs.tavily.com/api-reference/endpoint/search, https://docs.tavily.com/api-reference/endpoint/usage, https://docs.tavily.com/guides/api-credits, https://docs.tavily.com/guides/rate-limits, https://tavily.com/terms" as its spec; wrapper.json cites "https://docs.tavily.com/api-reference/endpoint/search"
+PASS  probe          nothing wrapper.json claims is declined against this account        0ms
+PASS  authorize      a verb declared absent is refused                                  27ms
+PASS  describe_shape a verb declared absent is refused                                  10ms
+PASS  limits         a verb declared absent is refused                                   7ms
+PASS  draft          a verb declared absent is refused                                   6ms
+PASS  publish        a verb declared absent is refused                                   5ms
+PASS  status         a verb declared absent is refused                                   5ms
+PASS  append_update  a verb declared absent is refused                                  13ms
+PASS  retract        a verb declared absent is refused                                   5ms
+PASS  read_back      a verb declared absent is refused                                  71ms
+PASS  read_metrics   a verb declared absent is refused                                   6ms
+PASS  set_cap        a verb declared absent is refused                                   5ms
+PASS  list_owned     a verb declared absent is refused                                   4ms
+PASS  read_series    a verb declared absent is refused                                   5ms
+PASS  read_total     a verb declared absent is refused                                   5ms
+PASS  conformance_not_a_verb a verb outside the contract is refused                              4ms
+PASS  search         a search answers articles, no more than it was asked for          291ms
+PASS  search         a windowed search answers only what the window holds             1826ms
+PASS  search         a search with no query is refused                                   9ms
+PASS  search         a filter on a dimension not declared is refused                     5ms
+PASS  -              no credential appears outside the credentials field, on either stream      0ms
+
+23 pass, 0 fail, 1 warn, 0 untested; 21 calls in 3.694s

@@ -9,13 +9,18 @@ or the web:
      authoring guide (this repository's README, with every line naming a
      hand-written wrapper removed), and the tool's documentation, fetched and
      fed in (spec/<tool>/).
-  2. Claude Code, headless, on claude-sonnet-5, writes the wrapper and its
-     unit tests. Its tools are file reads and edits inside the workspace and
-     `go build/test/vet`; no other shell, no web.
+  2. Mendel's own code-generation executor (internal/codegen/executor, on
+     claude-sonnet-5, with its own system prompt and tools) writes the
+     wrapper and its unit tests, driven by gendriver (driver/main.go.txt,
+     built from a Mendel checkout). It runs in a container that holds the
+     workspace and nothing else, as a non-root user; the Anthropic key
+     reaches the driver on stdin and is never in the environment or on disk,
+     because the executor's Bash tool runs with the driver's environment.
   3. This script builds it and runs the conformance suite against the real
      venue, with the key given only to the suite. Whatever did not pass goes
-     back to the same agent session, for at most three repair rounds -- the
-     same bound as Mendel's own code generation (maxTestRepairs).
+     back as a new run on the same workspace, for at most three repair
+     rounds -- as Mendel's own code generation does it (repairPrompt,
+     maxTestRepairs).
 
 Every round's spend, turns and time, and the suite's counts, are written to
 results/<tool>-<stamp>.json. Offline tooling: never on Mendel's serving path.
@@ -36,6 +41,8 @@ HERE = Path(__file__).resolve().parent
 MODEL = "claude-sonnet-5"
 MAX_REPAIRS = 3
 BUDGET_PER_CALL_USD = "3"
+DRIVER = Path(os.environ.get("SPIKE_DRIVER", "/tmp/mendel-spike-generate/gendriver"))
+IMAGE = "golang:1.26"
 CONFIG_DIR = Path.home() / "Library" / "Application Support" / "mendel-conformance"
 # Workspaces live outside this repository, so the hand-written wrappers are
 # not beside the agent even as parent directories.
@@ -80,15 +87,21 @@ Write the wrapper in {slug}/ as package main. It is {role}. It speaks contract
 - {slug}/Dockerfile, as GUIDE.md describes.
 - Standard library and the wrapperprotocol package only. It must build with
   `go build -mod=vendor ./{slug}`.
-- Unit tests against a fake server (net/http/httptest), run with
-  `go test -mod=vendor ./{slug}`. Never call the real API from a test: there is
-  no network access to it here, and no key.
+- Unit tests against a fake server (net/http/httptest). Check your work: run
+  `go build ./{slug}` and `go test ./{slug}` and make both pass (the module is
+  vendored; GOFLAGS already says so). Never call the real API from a test, and
+  do not try to reach it at all: there is no key here.
 
 When you finish, Mendel builds the wrapper and runs its conformance suite
 against a real {name} account. If anything does not pass, you will be told
 what, and asked to fix it."""
 
-REPAIR = """Mendel built your wrapper and ran the conformance suite against a real {name}
+REPAIR = """You are fixing an External Tool Wrapper for {name}, for Mendel, in {slug}/.
+The workspace holds your earlier work; GUIDE.md, the protocol in
+vendor/github.com/mendelbuild/mendelbuild/wrapperprotocol/ and the tool's
+documentation in spec/{slug}/ are as before.
+
+Mendel built the wrapper and ran the conformance suite against a real {name}
 account. {summary}
 
 What did not pass:
@@ -117,23 +130,24 @@ def workspace(slug: str) -> Path:
     return ws
 
 
-def claude(ws: Path, prompt: str, session: str | None) -> dict:
-    cmd = ["claude", "-p", prompt, "--model", MODEL, "--output-format", "json",
-           "--max-budget-usd", BUDGET_PER_CALL_USD, "--permission-mode", "acceptEdits",
-           "--allowedTools", "Read", "Write", "Edit", "Glob", "Grep",
-           "Bash(go build:*)", "Bash(go test:*)", "Bash(go vet:*)", "Bash(gofmt:*)",
-           "--disallowedTools", "WebFetch", "WebSearch"]
-    if session:
-        cmd += ["--resume", session]
-    # The agent gets no key: none is in its environment.
-    env = {k: v for k, v in os.environ.items() if not k.endswith("_API_KEY")}
-    env["GOFLAGS"] = "-mod=vendor"
+def agent(ws: Path, prompt: str, rnd: int) -> dict:
+    """One run of Mendel's executor in a container holding only the workspace."""
+    task = ws.parent / f"{ws.name}.prompt-{rnd}.txt"
+    task.write_text(prompt)
+    anthropic = key({"keyfile": CONFIG_DIR / "anthropic.env", "keyvar": "ANTHROPIC_API_KEY"})
+    cmd = ["docker", "run", "-i", "--rm", "--user", f"{os.getuid()}:{os.getgid()}",
+           "-v", f"{ws}:/work", "-v", f"{DRIVER}:/usr/local/bin/gendriver:ro", "-v", f"{task}:/prompt.txt:ro",
+           "-w", "/work", "-e", "HOME=/tmp", "-e", "GOCACHE=/tmp/go-cache", "-e", "GOFLAGS=-mod=vendor",
+           "-e", "GOTOOLCHAIN=local", IMAGE,
+           "gendriver", "-dir", "/work", "-prompt", "/prompt.txt", "-limit", BUDGET_PER_CALL_USD,
+           "-out", f"/work/.gendriver-round-{rnd}.json"]
     start = time.time()
-    p = subprocess.run(cmd, cwd=ws, env=env, capture_output=True, text=True, timeout=3600)
+    p = subprocess.run(cmd, input=f"ANTHROPIC_API_KEY={anthropic}\n", capture_output=True, text=True, timeout=3600)
+    (ws.parent / f"{ws.name}.agent-{rnd}.log").write_text(p.stderr)
     try:
         out = json.loads(p.stdout)
     except json.JSONDecodeError:
-        out = {"is_error": True, "result": (p.stdout + p.stderr)[-2000:]}
+        out = {"error": (p.stdout + p.stderr)[-2000:]}
     out["wall_seconds"] = round(time.time() - start, 1)
     return out
 
@@ -189,18 +203,18 @@ def main():
     harness.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(["go", "build", "-mod=vendor", "-o", str(harness), "./cmd/conformance"], cwd=REPO, check=True)
     ws = workspace(slug)
-    record = {"tool": slug, "model": MODEL, "workspace": str(ws), "rounds": []}
+    record = {"tool": slug, "model": MODEL, "agent": "mendel internal/codegen/executor via gendriver",
+              "workspace": str(ws), "rounds": []}
     prompt = PROMPT.format(slug=slug, **cfg)
-    session = None
     for rnd in range(MAX_REPAIRS + 1):
-        out = claude(ws, prompt, session)
-        session = out.get("session_id", session)
-        if out.get("is_error") and not out.get("total_cost_usd"):
-            # The agent never ran (a login, a flag): not a round of anything.
-            raise SystemExit(f"the agent did not start: {out.get('result')}")
+        out = agent(ws, prompt, rnd)
+        if not out.get("spend_usd") and out.get("error"):
+            # The agent never ran (a key, a flag): not a round of anything.
+            raise SystemExit(f"the agent did not start: {out.get('error')}")
         res = suite(ws, slug, cfg)
-        row = {"round": rnd, "cost_usd": out.get("total_cost_usd"), "turns": out.get("num_turns"),
-               "wall_seconds": out.get("wall_seconds"), "agent_error": out.get("is_error"),
+        row = {"round": rnd, "cost_usd": round(out.get("spend_usd") or 0, 4), "api_rounds": out.get("api_rounds"),
+               "tool_calls": out.get("tool_calls"), "wall_seconds": out.get("wall_seconds"),
+               "agent_error": out.get("error"), "stopped_for_budget": out.get("stopped_for_budget"),
                "built": res.get("built"), "counts": res.get("counts"), "passed": res.get("passed", False)}
         record["rounds"].append(row)
         print(json.dumps(row), flush=True)
@@ -211,7 +225,7 @@ def main():
         else:
             summary = f"{res['counts'].get('pass', 0)} checks passed."
             failures = "\n".join(res["failures"])
-        prompt = REPAIR.format(name=cfg["name"], summary=summary, failures=failures)
+        prompt = REPAIR.format(name=cfg["name"], slug=slug, summary=summary, failures=failures)
     record["passed"] = record["rounds"][-1]["passed"]
     record["repair_rounds"] = len(record["rounds"]) - 1
     record["cost_usd"] = round(sum(r["cost_usd"] or 0 for r in record["rounds"]), 4)

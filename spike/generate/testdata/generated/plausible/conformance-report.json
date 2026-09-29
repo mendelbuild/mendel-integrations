@@ -1,0 +1,517 @@
+{
+  "tool": "plausible",
+  "version": "0.1.0",
+  "at": "2026-09-29T06:00:00Z",
+  "checks": [
+    {
+      "name": "a request for another contract version is answered without acting",
+      "verb": "probe",
+      "outcome": "pass",
+      "detail": "failed: this wrapper speaks contract \"1\"; the request is for contract \"0-conformance\"",
+      "calls": 1,
+      "elapsed_ns": 526046625
+    },
+    {
+      "name": "probe answers a manifest the protocol accepts",
+      "verb": "probe",
+      "outcome": "pass",
+      "calls": 1,
+      "elapsed_ns": 292409500
+    },
+    {
+      "name": "the manifest answers as the wrapper.json describes it",
+      "verb": "probe",
+      "outcome": "pass",
+      "calls": 0,
+      "elapsed_ns": 0
+    },
+    {
+      "name": "nothing wrapper.json claims is declined against this account",
+      "verb": "probe",
+      "outcome": "pass",
+      "calls": 0,
+      "elapsed_ns": 0
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "describe_shape",
+      "outcome": "pass",
+      "detail": "Plausible Analytics is a read-only data source; this wrapper answers only probe, read_series and read_total",
+      "calls": 1,
+      "elapsed_ns": 13702166
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "limits",
+      "outcome": "pass",
+      "detail": "Plausible Analytics is a read-only data source; this wrapper answers only probe, read_series and read_total",
+      "calls": 1,
+      "elapsed_ns": 5641792
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "draft",
+      "outcome": "pass",
+      "detail": "this wrapper is a read-only data source and never writes to Plausible",
+      "calls": 1,
+      "elapsed_ns": 4772375
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "publish",
+      "outcome": "pass",
+      "detail": "this wrapper is a read-only data source and never writes to Plausible",
+      "calls": 1,
+      "elapsed_ns": 4709000
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "status",
+      "outcome": "pass",
+      "detail": "this wrapper is a read-only data source; there is nothing published by it to have a status",
+      "calls": 1,
+      "elapsed_ns": 5886917
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "append_update",
+      "outcome": "pass",
+      "detail": "this wrapper is a read-only data source and never writes to Plausible",
+      "calls": 1,
+      "elapsed_ns": 5649333
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "retract",
+      "outcome": "pass",
+      "detail": "this wrapper is a read-only data source and never writes to Plausible",
+      "calls": 1,
+      "elapsed_ns": 4947458
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "read_back",
+      "outcome": "pass",
+      "detail": "this wrapper is a read-only data source; there is nothing published by it to read back",
+      "calls": 1,
+      "elapsed_ns": 4972250
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "read_metrics",
+      "outcome": "pass",
+      "detail": "Plausible Analytics is a read-only data source; this wrapper answers only probe, read_series and read_total",
+      "calls": 1,
+      "elapsed_ns": 5030000
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "set_cap",
+      "outcome": "pass",
+      "detail": "this wrapper is a read-only data source and never writes to Plausible",
+      "calls": 1,
+      "elapsed_ns": 5592833
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "list_owned",
+      "outcome": "pass",
+      "detail": "this wrapper is a read-only data source; there is nothing published by it to list",
+      "calls": 1,
+      "elapsed_ns": 6355750
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "search",
+      "outcome": "pass",
+      "detail": "Plausible Analytics's Stats API answers aggregate metrics, not a searchable list of items",
+      "calls": 1,
+      "elapsed_ns": 4510541
+    },
+    {
+      "name": "a verb outside the contract is refused",
+      "verb": "conformance_not_a_verb",
+      "outcome": "pass",
+      "detail": "this wrapper is a read-only data source and does not honour this verb",
+      "calls": 1,
+      "elapsed_ns": 4763084
+    },
+    {
+      "name": "a series is read at a declared granularity",
+      "verb": "read_series",
+      "outcome": "pass",
+      "detail": "events by day: 7 points",
+      "calls": 1,
+      "elapsed_ns": 104714667
+    },
+    {
+      "name": "a series is read at a declared granularity",
+      "verb": "read_series",
+      "outcome": "pass",
+      "detail": "events by hour: 24 points",
+      "calls": 1,
+      "elapsed_ns": 30278584
+    },
+    {
+      "name": "a series is read at a declared granularity",
+      "verb": "read_series",
+      "outcome": "pass",
+      "detail": "events by month: 3 points",
+      "calls": 1,
+      "elapsed_ns": 33851250
+    },
+    {
+      "name": "a series is read at a declared granularity",
+      "verb": "read_series",
+      "outcome": "pass",
+      "detail": "events by week: 4 points",
+      "calls": 1,
+      "elapsed_ns": 25040750
+    },
+    {
+      "name": "a granularity not declared is refused, never substituted",
+      "verb": "read_series",
+      "outcome": "pass",
+      "detail": "fortnight: granularity \"fortnight\" is not one this wrapper serves (hour, day, week, month)",
+      "calls": 1,
+      "elapsed_ns": 5611334
+    },
+    {
+      "name": "a filter on a dimension not declared is refused",
+      "verb": "read_series",
+      "outcome": "pass",
+      "detail": "filter dimension \"conformance:not_a_dimension\" is not one Plausible exposes to this wrapper",
+      "calls": 1,
+      "elapsed_ns": 6644084
+    },
+    {
+      "name": "an unavailable metric is refused, never read as zero",
+      "verb": "read_total",
+      "outcome": "pass",
+      "detail": "average_revenue: metric \"average_revenue\" is unavailable: requires revenue goals configured on the site and an event:goal filter or dimension for one",
+      "calls": 1,
+      "elapsed_ns": 5262583
+    },
+    {
+      "name": "an available metric is read as a total",
+      "verb": "read_total",
+      "outcome": "pass",
+      "detail": "bounce_rate/sum over 2026-09-28: 0",
+      "calls": 1,
+      "elapsed_ns": 43043417
+    },
+    {
+      "name": "an unavailable metric is refused, never read as zero",
+      "verb": "read_total",
+      "outcome": "pass",
+      "detail": "conversion_rate: metric \"conversion_rate\" is unavailable: requires an event:goal filter or dimension naming which goal converted",
+      "calls": 1,
+      "elapsed_ns": 5490166
+    },
+    {
+      "name": "an available metric is read as a total",
+      "verb": "read_total",
+      "outcome": "pass",
+      "detail": "events/count over 2026-09-28: 37, as the venue holds",
+      "calls": 1,
+      "elapsed_ns": 27466208
+    },
+    {
+      "name": "an unavailable metric is refused, never read as zero",
+      "verb": "read_total",
+      "outcome": "pass",
+      "detail": "group_conversion_rate: metric \"group_conversion_rate\" is unavailable: requires an event:goal filter or dimension naming which goal converted",
+      "calls": 1,
+      "elapsed_ns": 6255667
+    },
+    {
+      "name": "an available metric is read as a total",
+      "verb": "read_total",
+      "outcome": "pass",
+      "detail": "pageviews/count over 2026-09-28: 37, as the venue holds",
+      "calls": 1,
+      "elapsed_ns": 23684625
+    },
+    {
+      "name": "an unavailable metric is refused, never read as zero",
+      "verb": "read_total",
+      "outcome": "pass",
+      "detail": "percentage: metric \"percentage\" is unavailable: requires a non-empty dimensions list; it names a share of a group, not a single total or series value the contract can express",
+      "calls": 1,
+      "elapsed_ns": 5397708
+    },
+    {
+      "name": "an unavailable metric is refused, never read as zero",
+      "verb": "read_total",
+      "outcome": "pass",
+      "detail": "scroll_depth: metric \"scroll_depth\" is unavailable: requires an event:page filter or dimension being set, which this wrapper does not add on its own",
+      "calls": 1,
+      "elapsed_ns": 4300625
+    },
+    {
+      "name": "an unavailable metric is refused, never read as zero",
+      "verb": "read_total",
+      "outcome": "pass",
+      "detail": "time_on_page: metric \"time_on_page\" is unavailable: requires an event:page filter or dimension being set, which this wrapper does not add on its own",
+      "calls": 1,
+      "elapsed_ns": 4198833
+    },
+    {
+      "name": "an unavailable metric is refused, never read as zero",
+      "verb": "read_total",
+      "outcome": "pass",
+      "detail": "total_revenue: metric \"total_revenue\" is unavailable: requires revenue goals configured on the site and an event:goal filter or dimension for one",
+      "calls": 1,
+      "elapsed_ns": 3933292
+    },
+    {
+      "name": "an available metric is read as a total",
+      "verb": "read_total",
+      "outcome": "pass",
+      "detail": "views_per_visit/sum over 2026-09-28: 3.36",
+      "calls": 1,
+      "elapsed_ns": 27277041
+    },
+    {
+      "name": "an available metric is read as a total",
+      "verb": "read_total",
+      "outcome": "pass",
+      "detail": "visit_duration/sum over 2026-09-28: 1",
+      "calls": 1,
+      "elapsed_ns": 188390333
+    },
+    {
+      "name": "an available metric is read as a total",
+      "verb": "read_total",
+      "outcome": "pass",
+      "detail": "visitors/unique over 2026-09-28: 11, as the venue holds",
+      "calls": 1,
+      "elapsed_ns": 18015167
+    },
+    {
+      "name": "an available metric is read as a total",
+      "verb": "read_total",
+      "outcome": "pass",
+      "detail": "visits/count over 2026-09-28: 11, as the venue holds",
+      "calls": 1,
+      "elapsed_ns": 14997708
+    },
+    {
+      "name": "a filter on a dimension not declared is refused",
+      "verb": "read_total",
+      "outcome": "pass",
+      "detail": "filter dimension \"conformance:not_a_dimension\" is not one Plausible exposes to this wrapper",
+      "calls": 1,
+      "elapsed_ns": 7511625
+    },
+    {
+      "name": "a count read as a series sums to the count read as a total",
+      "verb": "read_series",
+      "outcome": "pass",
+      "detail": "events over 2026-09-22..2026-09-28: 37 both ways",
+      "calls": 1,
+      "elapsed_ns": 25070875
+    },
+    {
+      "name": "no credential appears outside the credentials field, on either stream",
+      "outcome": "pass",
+      "detail": "1 credential(s) looked for in 74 outputs",
+      "calls": 0,
+      "elapsed_ns": 0
+    }
+  ],
+  "manifest": {
+    "contract": "1",
+    "wrapper": {
+      "version": "0.1.0",
+      "spec_source": "https://plausible.io/docs/stats-api",
+      "spec_hash": "sha256-ed9a0a1a48ed-2026-09-29"
+    },
+    "verbs": {
+      "append_update": {
+        "level": "declined",
+        "reason": "this wrapper is a read-only data source and never writes to Plausible"
+      },
+      "describe_shape": {
+        "level": "declined",
+        "reason": "Plausible Analytics is a read-only data source; this wrapper answers only probe, read_series and read_total"
+      },
+      "draft": {
+        "level": "declined",
+        "reason": "this wrapper is a read-only data source and never writes to Plausible"
+      },
+      "limits": {
+        "level": "declined",
+        "reason": "Plausible Analytics is a read-only data source; this wrapper answers only probe, read_series and read_total"
+      },
+      "list_owned": {
+        "level": "declined",
+        "reason": "this wrapper is a read-only data source; there is nothing published by it to list"
+      },
+      "probe": {
+        "level": "supported"
+      },
+      "publish": {
+        "level": "declined",
+        "reason": "this wrapper is a read-only data source and never writes to Plausible"
+      },
+      "read_back": {
+        "level": "declined",
+        "reason": "this wrapper is a read-only data source; there is nothing published by it to read back"
+      },
+      "read_metrics": {
+        "level": "declined",
+        "reason": "Plausible Analytics is a read-only data source; this wrapper answers only probe, read_series and read_total"
+      },
+      "read_series": {
+        "level": "partial",
+        "caveat": "Plausible labels each time bucket in the site's own Reporting Timezone, not UTC (spec/plausible/stats-api.md, \"Time dimensions\", fetched 2026-09-29); this wrapper cannot resolve that zone generically, so a series's \"at\" is that wall-clock label read as if it were UTC"
+      },
+      "read_total": {
+        "level": "supported"
+      },
+      "retract": {
+        "level": "declined",
+        "reason": "this wrapper is a read-only data source and never writes to Plausible"
+      },
+      "search": {
+        "level": "declined",
+        "reason": "Plausible Analytics's Stats API answers aggregate metrics, not a searchable list of items"
+      },
+      "set_cap": {
+        "level": "declined",
+        "reason": "this wrapper is a read-only data source and never writes to Plausible"
+      },
+      "status": {
+        "level": "declined",
+        "reason": "this wrapper is a read-only data source; there is nothing published by it to have a status"
+      }
+    },
+    "metrics": {
+      "average_revenue": {
+        "level": "unavailable",
+        "reason": "requires revenue goals configured on the site and an event:goal filter or dimension for one",
+        "aggregations": null
+      },
+      "bounce_rate": {
+        "level": "available",
+        "aggregations": [
+          "sum"
+        ],
+        "quality": [
+          "percentage"
+        ]
+      },
+      "conversion_rate": {
+        "level": "unavailable",
+        "reason": "requires an event:goal filter or dimension naming which goal converted",
+        "aggregations": null
+      },
+      "events": {
+        "level": "available",
+        "aggregations": [
+          "count"
+        ]
+      },
+      "group_conversion_rate": {
+        "level": "unavailable",
+        "reason": "requires an event:goal filter or dimension naming which goal converted",
+        "aggregations": null
+      },
+      "pageviews": {
+        "level": "available",
+        "aggregations": [
+          "count"
+        ]
+      },
+      "percentage": {
+        "level": "unavailable",
+        "reason": "requires a non-empty dimensions list; it names a share of a group, not a single total or series value the contract can express",
+        "aggregations": null
+      },
+      "scroll_depth": {
+        "level": "unavailable",
+        "reason": "requires an event:page filter or dimension being set, which this wrapper does not add on its own",
+        "aggregations": null
+      },
+      "time_on_page": {
+        "level": "unavailable",
+        "reason": "requires an event:page filter or dimension being set, which this wrapper does not add on its own",
+        "aggregations": null
+      },
+      "total_revenue": {
+        "level": "unavailable",
+        "reason": "requires revenue goals configured on the site and an event:goal filter or dimension for one",
+        "aggregations": null
+      },
+      "views_per_visit": {
+        "level": "available",
+        "aggregations": [
+          "sum"
+        ]
+      },
+      "visit_duration": {
+        "level": "available",
+        "aggregations": [
+          "sum"
+        ],
+        "quality": [
+          "seconds"
+        ]
+      },
+      "visitors": {
+        "level": "available",
+        "aggregations": [
+          "unique"
+        ],
+        "uniqueness": "a person is one unique visitor per day regardless of how many sessions or devices they use that day, and Plausible uses no cookies or other persistent identifiers to recognise them across days (spec/plausible/metrics-definitions.md, \"Unique Visitors\", fetched 2026-09-29)"
+      },
+      "visits": {
+        "level": "available",
+        "aggregations": [
+          "count"
+        ]
+      }
+    },
+    "granularities": [
+      "day",
+      "hour",
+      "month",
+      "week"
+    ],
+    "filter_dimensions": [
+      "event:goal",
+      "event:hostname",
+      "event:page",
+      "visit:browser",
+      "visit:browser_version",
+      "visit:channel",
+      "visit:city",
+      "visit:city_name",
+      "visit:country",
+      "visit:country_name",
+      "visit:device",
+      "visit:entry_page",
+      "visit:entry_page_hostname",
+      "visit:exit_page",
+      "visit:exit_page_hostname",
+      "visit:os",
+      "visit:os_version",
+      "visit:referrer",
+      "visit:region",
+      "visit:region_name",
+      "visit:source",
+      "visit:utm_campaign",
+      "visit:utm_content",
+      "visit:utm_medium",
+      "visit:utm_source",
+      "visit:utm_term"
+    ],
+    "venue": "read_only",
+    "idempotency": "not applicable: a read-only data source performs no writes",
+    "entitlements": {
+      "note": "the Stats API exposes no plan or rate-limit field on its own; plausible.io's documented default is 600 requests/hour per key (spec/plausible/stats-api.md, \"Authentication\", fetched 2026-09-29), which a self-hosted Community Edition instance need not enforce"
+    },
+    "storage_policy": "Plausible's Stats API returns the connected account's own analytics for the sites its key can query (spec/plausible/stats-api.md, \"Authentication\": \"A Stats API key can query sites owned by the team it was created for\", fetched 2026-09-29); the docs state no separate licence over what a caller may keep of what it reads, so this wrapper treats a reading as the account's own data, fine to keep and show back to that same account."
+  }
+}
