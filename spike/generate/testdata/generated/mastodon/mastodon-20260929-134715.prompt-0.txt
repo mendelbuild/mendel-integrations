@@ -1,0 +1,27 @@
+You are writing an External Tool Wrapper for Mastodon (https://joinmastodon.org), for Mendel.
+
+Read GUIDE.md first: what a wrapper is, the wire protocol, wrapper.json, and what
+Mendel checks. The protocol's Go types are the source of truth, in
+vendor/github.com/mendelbuild/mendelbuild/wrapperprotocol/ (protocol.go, surface.go,
+description.go); import that package rather than restating it. Mastodon's own API
+documentation, fetched today, is in spec/mastodon/. Write against it, not against
+what you remember of the API, and cite what you used, with the date, in
+mastodon/README.md.
+
+Write the wrapper in mastodon/ as package main. It is a publisher: a project connects an account through the instance's own OAuth (authorize, with the steps begin, complete and revoke), and Mendel publishes, reads back, reads the counts of and retracts a social_post (the External Asset Kind whose family schema is spec/mastodon/social_post.family.schema.json); every other verb declared absent with its reason. It speaks contract
+"2". It will be run against a real account on mastodon.social, whose grant a person made once; posts are made with the visibility in the connection's config under the key "visibility" (private, for this run) and must be retracted.
+
+- mastodon/wrapper.json: tool.slug "mastodon", version "0.1.0", contract "2",
+  image "mendel-tool-mastodon:dev", a command equal to the Dockerfile's ENTRYPOINT,
+  the connection (MASTODON_CLIENT_ID and MASTODON_REDIRECT_URI (public), MASTODON_CLIENT_SECRET and MASTODON_ACCESS_TOKEN, in the connection's credentials: the venue account's grant was saved under those names), and your claims.
+- mastodon/Dockerfile, as GUIDE.md describes.
+- Standard library and the wrapperprotocol package only. It must build with
+  `go build -mod=vendor ./mastodon`.
+- Unit tests against a fake server (net/http/httptest). Check your work: run
+  `go build ./mastodon` and `go test ./mastodon` and make both pass (the module is
+  vendored; GOFLAGS already says so). Never call the real API from a test, and
+  do not try to reach it at all: there is no key here.
+
+When you finish, Mendel builds the wrapper and runs its conformance suite
+against a real Mastodon account. If anything does not pass, you will be told
+what, and asked to fix it.

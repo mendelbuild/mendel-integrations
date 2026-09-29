@@ -1,0 +1,368 @@
+{
+  "tool": "mastodon",
+  "version": "0.1.0",
+  "at": "2026-09-29T21:45:14.716457Z",
+  "checks": [
+    {
+      "name": "a request for another contract version is answered without acting",
+      "verb": "probe",
+      "outcome": "pass",
+      "detail": "failed: this wrapper speaks contract \"2\"; the request named \"0-conformance\"",
+      "calls": 1,
+      "elapsed_ns": 509355042
+    },
+    {
+      "name": "probe answers a manifest the protocol accepts",
+      "verb": "probe",
+      "outcome": "pass",
+      "calls": 1,
+      "elapsed_ns": 456802209
+    },
+    {
+      "name": "the manifest answers as the wrapper.json describes it",
+      "verb": "probe",
+      "outcome": "warn",
+      "detail": "the manifest cites \"https://docs.joinmastodon.org/ (fetched 2026-09-28 at commit bbf263446459)\" as its spec; wrapper.json cites \"https://docs.joinmastodon.org/\"",
+      "calls": 0,
+      "elapsed_ns": 0
+    },
+    {
+      "name": "nothing wrapper.json claims is declined against this account",
+      "verb": "probe",
+      "outcome": "pass",
+      "calls": 0,
+      "elapsed_ns": 0
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "draft",
+      "outcome": "pass",
+      "detail": "Mastodon posts a status live the moment it is created; the API has no unpublished form of one to hold before that (its separate scheduled-post feature is not covered by the spec this wrapper was written against).",
+      "calls": 1,
+      "elapsed_ns": 14642792
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "set_cap",
+      "outcome": "pass",
+      "detail": "Mastodon exposes nothing this wrapper could set a numeric cap on.",
+      "calls": 1,
+      "elapsed_ns": 10085458
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "read_series",
+      "outcome": "pass",
+      "detail": "Mastodon's API reports an account's or a post's counts as they stand now; it offers no time-windowed analytics to bucket by granularity.",
+      "calls": 1,
+      "elapsed_ns": 7447125
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "read_total",
+      "outcome": "pass",
+      "detail": "Mastodon's API reports an account's or a post's counts as they stand now, not a total over a window; read a post's counts with read_metrics instead.",
+      "calls": 1,
+      "elapsed_ns": 6294375
+    },
+    {
+      "name": "a verb declared absent is refused",
+      "verb": "search",
+      "outcome": "pass",
+      "detail": "this wrapper acts on one account's own posts; it does not search Mastodon's federated content on the account's behalf.",
+      "calls": 1,
+      "elapsed_ns": 5639792
+    },
+    {
+      "name": "a verb outside the contract is refused",
+      "verb": "conformance_not_a_verb",
+      "outcome": "pass",
+      "detail": "verb \"conformance_not_a_verb\" is not one this wrapper answers",
+      "calls": 1,
+      "elapsed_ns": 5193125
+    },
+    {
+      "name": "authorize begin answers a URL that carries Mendel's state",
+      "verb": "authorize",
+      "outcome": "pass",
+      "detail": "asks for profile read:statuses write:statuses",
+      "calls": 1,
+      "elapsed_ns": 4710750
+    },
+    {
+      "name": "a refresh not declared is refused",
+      "verb": "authorize",
+      "outcome": "pass",
+      "detail": "step \"refresh\" is not offered; this wrapper answers begin, complete and revoke",
+      "calls": 1,
+      "elapsed_ns": 4763625
+    },
+    {
+      "name": "authorize complete exchanges a code for credentials",
+      "verb": "authorize",
+      "outcome": "warn",
+      "detail": "needs a person to approve in a browser; run `conformance authorize`, which this run's credentials came from",
+      "calls": 0,
+      "elapsed_ns": 0
+    },
+    {
+      "name": "the shape declares its boundaries",
+      "verb": "publish",
+      "outcome": "warn",
+      "detail": "kind social_post's shape declares no maxLength for text, so its boundary cannot be exercised",
+      "calls": 0,
+      "elapsed_ns": 0
+    },
+    {
+      "name": "a payload missing a required field is refused",
+      "verb": "publish",
+      "outcome": "pass",
+      "detail": "the payload does not match the social_post shape: text is empty",
+      "calls": 1,
+      "elapsed_ns": 5232667
+    },
+    {
+      "name": "a valid asset is published",
+      "verb": "publish",
+      "outcome": "pass",
+      "detail": "social_post https://mastodon.social/@mdl_test/117356515560180507",
+      "calls": 1,
+      "elapsed_ns": 468867292
+    },
+    {
+      "name": "publishing again with the same key is the same asset",
+      "verb": "publish",
+      "outcome": "pass",
+      "calls": 1,
+      "elapsed_ns": 1211284583
+    },
+    {
+      "name": "a published asset's status is live",
+      "verb": "status",
+      "outcome": "pass",
+      "detail": "public",
+      "calls": 1,
+      "elapsed_ns": 397999583
+    },
+    {
+      "name": "read_back equals what was approved, field for field",
+      "verb": "read_back",
+      "outcome": "pass",
+      "calls": 1,
+      "elapsed_ns": 653643375
+    },
+    {
+      "name": "read_metrics answers every metric the manifest lists",
+      "verb": "read_metrics",
+      "outcome": "pass",
+      "detail": "favourites_count 0, quotes_count 0, reblogs_count 0, replies_count 0",
+      "calls": 1,
+      "elapsed_ns": 472274875
+    },
+    {
+      "name": "retract takes the asset back, and is safe twice",
+      "verb": "retract",
+      "outcome": "pass",
+      "detail": "deleted",
+      "calls": 2,
+      "elapsed_ns": 715762250
+    },
+    {
+      "name": "a retracted asset's status says so",
+      "verb": "status",
+      "outcome": "pass",
+      "calls": 1,
+      "elapsed_ns": 332123583
+    },
+    {
+      "name": "read_back of a retracted asset is refused",
+      "verb": "read_back",
+      "outcome": "pass",
+      "detail": "the asset has been retracted; there is nothing left to read back",
+      "calls": 1,
+      "elapsed_ns": 344642167
+    },
+    {
+      "name": "an honoured verb is exercised",
+      "verb": "append_update",
+      "outcome": "untested",
+      "detail": "declared partial; the suite cannot exercise append_update yet",
+      "calls": 0,
+      "elapsed_ns": 0
+    },
+    {
+      "name": "an honoured verb is exercised",
+      "verb": "list_owned",
+      "outcome": "untested",
+      "detail": "declared partial; the suite cannot exercise list_owned yet",
+      "calls": 0,
+      "elapsed_ns": 0
+    },
+    {
+      "name": "authorize revoke ends the grant, and is safe twice",
+      "verb": "authorize",
+      "outcome": "warn",
+      "detail": "not run: it ends the venue's grant (run with -revoke to exercise it)",
+      "calls": 0,
+      "elapsed_ns": 0
+    },
+    {
+      "name": "no credential appears outside the credentials field, on either stream",
+      "outcome": "pass",
+      "detail": "3 credential(s) looked for in 38 outputs",
+      "calls": 0,
+      "elapsed_ns": 0
+    }
+  ],
+  "manifest": {
+    "contract": "2",
+    "wrapper": {
+      "version": "0.1.0",
+      "spec_source": "https://docs.joinmastodon.org/ (fetched 2026-09-28 at commit bbf263446459)",
+      "spec_hash": "sha256:13025cc3adb16a31288af9423eda10f299d588f2e8b49b8ae3d1f05aa0f86e22"
+    },
+    "verbs": {
+      "append_update": {
+        "level": "partial",
+        "caveat": "changes only the post's text; Mastodon's edit endpoint cannot change a status's visibility or its media once posted."
+      },
+      "authorize": {
+        "level": "supported"
+      },
+      "draft": {
+        "level": "declined",
+        "reason": "Mastodon posts a status live the moment it is created; the API has no unpublished form of one to hold before that (its separate scheduled-post feature is not covered by the spec this wrapper was written against)."
+      },
+      "list_owned": {
+        "level": "partial",
+        "caveat": "returns the most recent page of the account's own posts, newest first, boosts excluded."
+      },
+      "probe": {
+        "level": "supported"
+      },
+      "publish": {
+        "level": "partial",
+        "caveat": "only When.Mode \"now\" is offered; Mastodon's scheduled posts are not covered by the spec this wrapper was written against, so \"at\" and \"announce\" are refused."
+      },
+      "read_back": {
+        "level": "partial",
+        "caveat": "the text is read back with the link publish appended to it (since Mastodon has no separate field for one) taken back off when it matches; the link is the post's preview card URL if Mastodon found one, and the media description is the first attachment's, both approximations rather than what was originally given."
+      },
+      "read_metrics": {
+        "level": "supported"
+      },
+      "read_series": {
+        "level": "declined",
+        "reason": "Mastodon's API reports an account's or a post's counts as they stand now; it offers no time-windowed analytics to bucket by granularity."
+      },
+      "read_total": {
+        "level": "declined",
+        "reason": "Mastodon's API reports an account's or a post's counts as they stand now, not a total over a window; read a post's counts with read_metrics instead."
+      },
+      "retract": {
+        "level": "supported"
+      },
+      "search": {
+        "level": "declined",
+        "reason": "this wrapper acts on one account's own posts; it does not search Mastodon's federated content on the account's behalf."
+      },
+      "set_cap": {
+        "level": "declined",
+        "reason": "Mastodon exposes nothing this wrapper could set a numeric cap on."
+      },
+      "status": {
+        "level": "supported"
+      }
+    },
+    "metrics": {
+      "favourites_count": {
+        "level": "available",
+        "kind": "count",
+        "aggregations": [
+          "count"
+        ]
+      },
+      "quotes_count": {
+        "level": "available",
+        "kind": "count",
+        "aggregations": [
+          "count"
+        ]
+      },
+      "reblogs_count": {
+        "level": "available",
+        "kind": "count",
+        "aggregations": [
+          "count"
+        ]
+      },
+      "replies_count": {
+        "level": "available",
+        "kind": "count",
+        "aggregations": [
+          "count"
+        ]
+      }
+    },
+    "granularities": null,
+    "filter_dimensions": null,
+    "venue": "reversible_writes",
+    "idempotency": "native for publish only, via the Idempotency-Key header, kept for up to one hour (methods/statuses#create); append_update, retract and the rest have none.",
+    "entitlements": {
+      "followers_count": 0,
+      "rate_limit_remaining": "299",
+      "rate_limit_reset": "2026-09-29T21:50:00.576034Z",
+      "requests_per_5min": 300,
+      "statuses_count": 0
+    },
+    "storage_policy": "this instance's terms of service (https://mastodon.social/terms-of-service, read from GET /api/v2/instance) govern what may be kept of content posted there; Mendel keeps only the reference (the post's id and URL) to what it wrote, not a copy of anyone else's posts.",
+    "authorization": {
+      "steps": [
+        "begin",
+        "complete",
+        "revoke"
+      ],
+      "scopes": [
+        "profile",
+        "read:statuses",
+        "write:statuses"
+      ],
+      "expires": "never by default: Mastodon access tokens obtained this way do not expire unless a person or the instance's admin revokes them (no refresh grant is offered)."
+    },
+    "kinds": {
+      "social_post": {
+        "level": "supported",
+        "shape": {
+          "type": "object",
+          "description": "One post on a social platform or community site, complete and as it will appear.",
+          "properties": {
+            "text": {
+              "type": "string",
+              "description": "The post, complete and ready to paste. Under 280 characters where the platform limits length, and never over 1,000. Say the one thing worth saying; no hashtags unless the platform expects them."
+            },
+            "link": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The link the post carries, copied exactly as given, or null when the post carries none."
+            },
+            "media": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "A one-sentence description of an image or short video to attach, or null for none. Mendel does not produce media; the person attaches it."
+            }
+          },
+          "required": [
+            "text",
+            "link",
+            "media"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  }
+}

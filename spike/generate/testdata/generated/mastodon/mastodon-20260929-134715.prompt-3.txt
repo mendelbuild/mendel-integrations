@@ -1,0 +1,19 @@
+You are fixing an External Tool Wrapper for Mastodon, for Mendel, in mastodon/.
+The workspace holds your earlier work; GUIDE.md, the protocol in
+vendor/github.com/mendelbuild/mendelbuild/wrapperprotocol/ and the tool's
+documentation in spec/mastodon/ are as before.
+
+Mendel built the wrapper and ran the conformance suite against a real Mastodon
+account. 18 checks passed.
+
+What did not pass:
+
+- FAIL publish: a payload missing a required field is refused: it failed rather than being refused: the payload does not match the social_post shape: text is empty
+- FAIL read_back: read_back equals what was approved, field for field: read back {"text":"Mendel conformance check 5ee52eb5c88c. This post is deleted within the minute.\n\nhttps://mendel.build/?conformance=1d5e1c36f79f","link":"https://mendel.build/?conformance=1d5e1c36f79f","media":null}; approved {"link":"https://mendel.build/?conformance=1d5e1c36f79f","media":null,"text":"Mendel conformance check 5ee52eb5c88c. This post is deleted within the minute."}
+- FAIL read_back: read_back of a retracted asset is refused: a retracted asset was not refused: reading the source: 404 Not Found: Not Found
+- UNTESTED append_update: an honoured verb is exercised: declared partial; the suite cannot exercise append_update yet
+- UNTESTED list_owned: an honoured verb is exercised: declared partial; the suite cannot exercise list_owned yet
+
+Fix the wrapper so these pass, keeping everything else passing. If a check
+shows the wrapper.json and the wrapper disagree, change whichever is wrong.
+The unit tests should still pass.

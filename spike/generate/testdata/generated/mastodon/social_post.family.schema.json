@@ -1,0 +1,20 @@
+{
+  "type": "object",
+  "description": "One post on a social platform or community site, complete and as it will appear.",
+  "properties": {
+    "text": {
+      "type": "string",
+      "description": "The post, complete and ready to paste. Under 280 characters where the platform limits length, and never over 1,000. Say the one thing worth saying; no hashtags unless the platform expects them."
+    },
+    "link": {
+      "type": ["string", "null"],
+      "description": "The link the post carries, copied exactly as given, or null when the post carries none."
+    },
+    "media": {
+      "type": ["string", "null"],
+      "description": "A one-sentence description of an image or short video to attach, or null for none. Mendel does not produce media; the person attaches it."
+    }
+  },
+  "required": ["text", "link", "media"],
+  "additionalProperties": false
+}

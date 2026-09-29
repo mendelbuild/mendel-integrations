@@ -21,7 +21,7 @@ was seen, what it means for the contract, and what, if anything, was done.
 | Mastodon wrapper (publisher, OAuth) | 27 of 27 checks pass live against @mdl_test on mastodon.social (0.1.1); two warnings: `complete` needs a person, and `revoke` is run only when asked |
 | Tavily wrapper (search) | 24 of 24 checks pass live (two basic searches, 2 credits) |
 | Venue-supplied expected values (finding 5) | Built: `-expect`; the Plausible venue writes its truth, and a consistently wrong wrapper now fails |
-| Generation test (`spike/generate/`) | Done: both tools generated blind, each passing after one repair round, $4.36 in all; see "The generation test" |
+| Generation test (`spike/generate/`) | Done: Plausible and Tavily pass after one repair round ($4.36); Mastodon, a publisher, reaches 0 failures with two verbs untested ($5.50); see "The generation test" |
 
 ## Contract 2 (2026-09-29)
 
@@ -79,6 +79,26 @@ search *query* itself to Tavily.
 
 **And the generated Plausible wrapper is wrong in a way the suite passed.**
 See finding 14.
+
+**Then a publisher (2026-09-29).** The same loop, on contract 2, wrote a
+Mastodon wrapper from Mastodon's documentation and the `social_post` family
+schema, run against @mdl_test with visibility pinned private in the
+connection's config, the venue's grant read by the suite from the file a
+person authorized once, and every post the reports mention retracted
+afterwards with the hand-written wrapper (both were: nothing was left).
+
+| Round | Spend | Suite | Note |
+|---|---|---|---|
+| 0 | $0.47 | -- | the API connection dropped mid-run (#46) |
+| 1 | $0.29 | -- | the same |
+| 2 | $2.63 | 18 pass, 3 fail, 4 warn, 2 untested | a missing field failed rather than being refused; read_back folded the link into the text; a gone post failed rather than being refused |
+| 3 | $0.50 | 21 pass, 0 fail, 4 warn, 2 untested | all three fixed, before the connection dropped again |
+
+$3.90, plus $1.59 across two earlier attempts lost to the machine sleeping
+and to Mendel's executor stopping when the model narrated a next step instead
+of calling a tool (#45): **about $5.50 for the publisher, $9.86 for the three
+generated wrappers together.** Nothing failed at the end; it did not pass,
+because two verbs are untested -- and that is the next finding.
 
 **Answer, for now:** yes, with the suite as the loop's judge, an agent writes
 a working wrapper from a fed-in spec in one repair round for a few dollars --
@@ -247,3 +267,28 @@ sends family-conformant posts, the wrapper's shape refines the family (every
 field kept and required, `media` narrowed to null) and it refuses media it
 cannot attach (0.2.1). *Still to do:* the suite should build its payloads from
 the family schema itself, rather than from a row it holds per kind.
+
+**16. A generated wrapper stretches verbs to claim more, and the suite can
+only say "untested".** The generated Mastodon wrapper claims two verbs the
+hand-written one declines: `append_update`, implemented as editing the post's
+text, and `list_owned`, implemented as "the most recent page of the account's
+own posts". Both keep the protocol and stretch the meaning. `append_update`
+exists for log-shaped kinds -- an incident is an append-only log -- and a
+social post is not one; editing a post is a lifecycle the contract has no verb
+for, so the agent reached for the nearest. `list_owned(prefix)` is how Mendel
+finds what it created before creating it again; a recent page that ignores the
+prefix cannot serve that, and says so only in a caveat. The suite reported
+both untested, which is never a pass, so it did not approve them -- but it has
+no check that would reject them either. The same shape as finding 14, and the
+same remedy: the contract saying what a verb is for in terms a check can hold
+a manifest to (`append_update` only for a kind with the log-shaped trait;
+`list_owned` answering by the prefix it was given, exercised by publishing
+with a known prefix and listing it back), and an agent told that declining is
+a designed outcome, not a gap to fill.
+
+**17. Mendel's executor is brittle in ways only a long run shows.** It ends a
+run when the model replies without a tool call, even when the reply is
+narrating its next step with nothing written (mendelbuild#45), and it ends the
+whole run on one dropped connection, with no retry (mendelbuild#46). Each cost
+a round here; in Mendel's own code generation each costs one of three repair
+attempts and its spend.

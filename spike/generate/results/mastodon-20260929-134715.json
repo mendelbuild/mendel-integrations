@@ -1,0 +1,78 @@
+{
+  "tool": "mastodon",
+  "model": "claude-sonnet-5",
+  "agent": "mendel internal/codegen/executor via gendriver",
+  "workspace": "/tmp/mendel-spike-generate/mastodon-20260929-134715",
+  "rounds": [
+    {
+      "round": 0,
+      "cost_usd": 0.4705,
+      "api_rounds": 14,
+      "tool_calls": 16,
+      "wall_seconds": 896.0,
+      "agent_error": "send request: Post \"https://api.anthropic.com/v1/messages\": unexpected EOF",
+      "stopped_for_budget": false,
+      "built": false,
+      "counts": null,
+      "passed": false
+    },
+    {
+      "round": 1,
+      "cost_usd": 0.2938,
+      "api_rounds": 9,
+      "tool_calls": 14,
+      "wall_seconds": 598.3,
+      "agent_error": "send request: Post \"https://api.anthropic.com/v1/messages\": unexpected EOF",
+      "stopped_for_budget": false,
+      "built": false,
+      "counts": null,
+      "passed": false
+    },
+    {
+      "round": 2,
+      "cost_usd": 2.6295,
+      "api_rounds": 43,
+      "tool_calls": 53,
+      "wall_seconds": 714.4,
+      "agent_error": null,
+      "stopped_for_budget": false,
+      "built": true,
+      "counts": {
+        "pass": 18,
+        "warn": 4,
+        "fail": 3,
+        "untested": 2
+      },
+      "passed": false
+    },
+    {
+      "round": 3,
+      "cost_usd": 0.5027,
+      "api_rounds": 17,
+      "tool_calls": 23,
+      "wall_seconds": 1261.0,
+      "agent_error": "send request: Post \"https://api.anthropic.com/v1/messages\": unexpected EOF",
+      "stopped_for_budget": false,
+      "built": true,
+      "counts": {
+        "pass": 21,
+        "warn": 4,
+        "untested": 2
+      },
+      "passed": false
+    }
+  ],
+  "passed": false,
+  "repair_rounds": 3,
+  "cost_usd": 3.8965,
+  "cleaned_up": [
+    {
+      "ref": "117356432439522352",
+      "retracted": "deleted"
+    },
+    {
+      "ref": "117356515560180507",
+      "retracted": "deleted"
+    }
+  ]
+}

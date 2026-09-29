@@ -1,0 +1,58 @@
+{
+  "tool": {
+    "slug": "mastodon",
+    "name": "Mastodon",
+    "homepage": "https://joinmastodon.org",
+    "categories": ["post on social media"]
+  },
+  "version": "0.1.0",
+  "contract": "2",
+  "image": "mendel-tool-mastodon:dev",
+  "command": ["/mastodon"],
+  "spec_source": "https://docs.joinmastodon.org/",
+  "connection": {
+    "account": {
+      "label": "Instance domain",
+      "help": "Where the account lives, e.g. mastodon.social. Do not include https://."
+    },
+    "credentials": [
+      {
+        "name": "MASTODON_ACCESS_TOKEN",
+        "label": "Access token",
+        "help": "Produced by connecting through Mastodon's own sign-in flow."
+      },
+      {
+        "name": "MASTODON_CLIENT_ID",
+        "label": "Client ID",
+        "help": "The OAuth application Mendel registered on this instance.",
+        "public": true
+      },
+      {
+        "name": "MASTODON_CLIENT_SECRET",
+        "label": "Client secret",
+        "help": "That application's secret."
+      }
+    ],
+    "endpoint": {
+      "label": "API base URL (self-hosted only)",
+      "help": "Leave blank to use https://<instance domain>."
+    },
+    "authorize": true
+  },
+  "claims": {
+    "probe": "supported",
+    "authorize": "supported",
+    "draft": "declined",
+    "publish": "partial",
+    "status": "supported",
+    "append_update": "partial",
+    "retract": "supported",
+    "read_back": "partial",
+    "read_metrics": "supported",
+    "set_cap": "declined",
+    "list_owned": "partial",
+    "read_series": "declined",
+    "read_total": "declined",
+    "search": "declined"
+  }
+}
