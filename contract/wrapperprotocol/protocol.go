@@ -138,6 +138,8 @@ type VerbCall struct {
 	Query          string          `json:"query,omitempty"`
 	Limit          int             `json:"limit,omitempty"`
 	Prefix         string          `json:"prefix,omitempty"`
+	// Cap is set_cap's argument, on the asset Ref names.
+	Cap *Cap `json:"cap,omitempty"`
 }
 
 // Measure is what is counted: an event and how it is aggregated. The
@@ -208,6 +210,8 @@ type VerbResult struct {
 	Retracted    string                  `json:"retracted,omitempty"`
 	Items        []Item                  `json:"items,omitempty"`
 	Owned        []string                `json:"owned,omitempty"`
+	// CapSet is set_cap's answer: the cap as the tool now holds it.
+	CapSet *CapSet `json:"cap_set,omitempty"`
 
 	// Refused is a designed outcome the wrapper will not do: a granularity
 	// the tool lacks, a metric declared unavailable, a filter on a dimension
@@ -334,6 +338,11 @@ type MetricSupport struct {
 	Uniqueness string `json:"uniqueness,omitempty"`
 	// Quality flags every read of this metric carries.
 	Quality []string `json:"quality,omitempty"`
+	// Spend marks the metric that is what an asset has cost at the tool: a
+	// sum in a currency, and at most one per manifest. Kind and unit cannot
+	// tell spend from revenue on a platform that reports both, and
+	// recording one as the other is a silent wrong answer.
+	Spend bool `json:"spend,omitempty"`
 }
 
 // WrapperProvenance is what the wrapper says about itself: the version, and
@@ -430,7 +439,20 @@ func (m *CapabilityManifest) Check() string {
 	if why := m.checkSurface(); why != "" {
 		return why
 	}
+	spend := ""
 	for _, ms := range SortedMetrics(m.Metrics) {
+		if ms.Support.Spend {
+			switch {
+			case spend != "":
+				return fmt.Sprintf("metrics %s and %s are both marked spend; at most one metric is what an asset cost",
+					spend, ms.Name)
+			case ms.Support.Level == MetricAvailable &&
+				(ms.Support.Kind != KindSum || !currencyPattern.MatchString(ms.Support.Unit)):
+				return fmt.Sprintf("metric %s is marked spend and is not a sum in a currency (kind %q, unit %q)",
+					ms.Name, ms.Support.Kind, ms.Support.Unit)
+			}
+			spend = ms.Name
+		}
 		switch ms.Support.Level {
 		case MetricAvailable:
 			allowed, known := kindAggregations[ms.Support.Kind]
@@ -700,6 +722,17 @@ func ParseWrapperResponse(stdout []byte, calls int) (WrapperResponse, error) {
 	for i, r := range resp.Results {
 		if len(r.Credentials) > 0 && r.Verb != VerbAuthorize {
 			return WrapperResponse{}, fmt.Errorf("result %d (%s) carries credentials, which only authorize may return", i, r.Verb)
+		}
+		if r.CapSet != nil && r.Verb != VerbSetCap {
+			return WrapperResponse{}, fmt.Errorf("result %d (%s) carries a cap_set, which only set_cap answers", i, r.Verb)
+		}
+		if r.Verb == VerbSetCap && r.Succeeded() {
+			if r.CapSet == nil {
+				return WrapperResponse{}, fmt.Errorf("result %d (set_cap) succeeded without saying what cap the tool now holds", i)
+			}
+			if why := r.CapSet.Check(); why != "" {
+				return WrapperResponse{}, fmt.Errorf("result %d (set_cap): %s", i, why)
+			}
 		}
 		if r.Status != nil && !effectiveStates[r.Status.Effective] {
 			return WrapperResponse{}, fmt.Errorf("result %d (%s) says the asset is %q, which is not a state the contract has (not_live, live, gone)",

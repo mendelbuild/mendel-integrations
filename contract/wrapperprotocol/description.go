@@ -2,6 +2,7 @@ package wrapperprotocol
 
 import (
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 	"regexp"
@@ -41,6 +42,27 @@ type Description struct {
 	SpecSource string            `json:"spec_source"`
 	Connection ConnectionSpec    `json:"connection"`
 	Claims     map[string]string `json:"claims"`
+	// Prices are what the tool charges for a call that succeeds, verb by
+	// verb, where it charges per call (a search tool's credits). Declared
+	// here, versioned with the wrapper, so Mendel can put a price on a call
+	// without naming any tool in its own code (doc 35 §20 stream F).
+	Prices []CallPrice `json:"prices,omitempty"`
+}
+
+// CallPrice is the list price of one call of a verb that succeeds.
+type CallPrice struct {
+	Verb     Verb    `json:"verb"`
+	Amount   float64 `json:"amount"`
+	Currency string  `json:"currency"`
+	// Plan is the plan the list price is for, in the tool's own words.
+	Plan string `json:"plan"`
+	// Source is where the tool publishes the price.
+	Source string `json:"source"`
+	// PlanSetting names a connection.config setting in which a project
+	// states its own price per call on its plan, overriding Amount when
+	// set. A value Mendel cannot read as a non-negative decimal makes the
+	// spend unknown, never zero.
+	PlanSetting string `json:"plan_setting,omitempty"`
 }
 
 // Tool is the External Tool a wrapper is for.
@@ -146,6 +168,8 @@ var (
 	slugPattern       = regexp.MustCompile(`^[a-z][a-z0-9-]*$`)
 	credentialPattern = regexp.MustCompile(`^[A-Z][A-Z0-9_]*$`)
 	settingPattern    = regexp.MustCompile(`^[a-z][a-z0-9_]*$`)
+	// currencyPattern is an ISO 4217 code's shape: three upper-case letters.
+	currencyPattern = regexp.MustCompile(`^[A-Z]{3}$`)
 	claimLevels       = map[string]bool{"supported": true, "partial": true, "declined": true}
 )
 
@@ -215,6 +239,29 @@ func (d Description) Check() string {
 		if !claimLevels[level] {
 			return fmt.Sprintf("claim %q for %s is not supported, partial or declined", level, verb)
 		}
+	}
+	priced := map[Verb]bool{}
+	for _, p := range d.Prices {
+		switch {
+		case !isContractVerb(p.Verb):
+			return fmt.Sprintf("a price is declared for %q, which is not a verb of the contract", p.Verb)
+		case priced[p.Verb]:
+			return fmt.Sprintf("%s is priced twice", p.Verb)
+		case d.Claims[string(p.Verb)] != "supported" && d.Claims[string(p.Verb)] != "partial":
+			return fmt.Sprintf("%s is priced and not claimed supported or partial", p.Verb)
+		case !(p.Amount >= 0) || math.IsInf(p.Amount, 0):
+			return fmt.Sprintf("the price of %s is %v; a price is a non-negative number", p.Verb, p.Amount)
+		case !currencyPattern.MatchString(p.Currency):
+			return fmt.Sprintf("the price of %s is in %q; name the currency by its ISO 4217 code, e.g. USD", p.Verb, p.Currency)
+		case strings.TrimSpace(p.Plan) == "":
+			return fmt.Sprintf("the price of %s does not say which plan it is for", p.Verb)
+		case strings.TrimSpace(p.Source) == "":
+			return fmt.Sprintf("the price of %s does not say where the tool publishes it", p.Verb)
+		case p.PlanSetting != "" && !settings[p.PlanSetting]:
+			return fmt.Sprintf("the price of %s is overridden by setting %q, which connection.config does not declare",
+				p.Verb, p.PlanSetting)
+		}
+		priced[p.Verb] = true
 	}
 	return ""
 }

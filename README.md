@@ -39,7 +39,7 @@ with the reason.
 | `retract` | Take an asset back, safely twice, never destroying history | Twice, the same outcome |
 | `read_back` | The asset as the tool holds it, in the kind's family fields | Equal to what was approved, field for field; refused once gone |
 | `read_metrics` | An asset's metrics, a value or why there is none | Every metric the manifest lists is answered as declared |
-| `set_cap` | The most an asset may spend, for a kind that **involves spend** | Refused for a wrapper none of whose kinds involves spend |
+| `set_cap` | The most an asset may spend (a total, a daily amount or both, and always an end date), answered as the tool now holds it: `hard`, or a `target` with how far it may be exceeded | Refused for a wrapper none of whose kinds involves spend |
 | `list_owned` | The assets whose **name** starts with the prefix given | The published asset is listed for its prefix and not for another |
 | `read_series` | One point per step, empty steps included | Steps, order, window; a granularity not declared is refused |
 | `read_total` | One number, as the metric's kind allows | Against the venue's truth where it knows it |
@@ -232,7 +232,19 @@ refresh` rewrites unpinned ones. A registration writes the same tables from a
   from it. Each credential is held encrypted in `project_env_vars` under its
   `name` and arrives in a run's `connection.credentials` under the same name.
   Name credentials for the tool, so they do not collide with an
-  application's own secrets.
+  application's own secrets. `connection.config` declares the settings the
+  wrapper reads from a run's `connection.config` (who sees a post): a
+  lower-case `name`, a `label`, the `values` it accepts when only some, and
+  the `default` it applies when unset. Mendel sends only a declared setting
+  with a value the wrapper takes.
+- **`prices`**, where the tool charges per call: for each claimed verb, the
+  list price of one call that succeeds (`amount`, `currency` as an ISO 4217
+  code), the `plan` it is for and the `source` that publishes it, and
+  optionally a `plan_setting`, a declared setting in which a project states
+  its own price on its plan. Mendel writes what a call cost from this; a
+  price it cannot read makes the spend unknown, never zero. A metric that is
+  what an asset cost at the tool is marked `"spend": true` in the manifest: a
+  sum in a currency, and at most one, so spend is never mistaken for revenue.
 - **`version`** and **`contract`** must be what the wrapper's `probe`
   answers: verification refuses an image that answers as another version or
   contract. **One digest per version, ever:** a changed image, or a changed

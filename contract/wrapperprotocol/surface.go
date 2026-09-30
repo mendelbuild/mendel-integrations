@@ -226,6 +226,63 @@ func redactedCalls(calls []VerbCall) []VerbCall {
 	return out
 }
 
+// Cap is the most an asset may spend: over its life, per day, or both, and
+// always until when. The end date is the backstop, since most ad platforms
+// treat a cap as a target (doc 35 A11).
+type Cap struct {
+	Currency string   `json:"currency"`
+	Total    *float64 `json:"total,omitempty"`
+	Daily    *float64 `json:"daily,omitempty"`
+	EndsAt   time.Time `json:"ends_at"`
+}
+
+// Check says what is wrong with a cap, or "".
+func (c Cap) Check() string {
+	switch {
+	case !currencyPattern.MatchString(c.Currency):
+		return fmt.Sprintf("the cap is in %q; name the currency by its ISO 4217 code", c.Currency)
+	case c.Total == nil && c.Daily == nil:
+		return "the cap sets neither a total nor a daily amount"
+	case c.Total != nil && !(*c.Total >= 0):
+		return "the cap's total is not a non-negative number"
+	case c.Daily != nil && !(*c.Daily >= 0):
+		return "the cap's daily amount is not a non-negative number"
+	case c.EndsAt.IsZero():
+		return "the cap has no end date, which is the backstop"
+	}
+	return ""
+}
+
+// How a tool enforces a cap.
+const (
+	CapHard   = "hard"
+	CapTarget = "target"
+)
+
+// CapSet is set_cap's answer: the cap as the tool now holds it, which may
+// be rounded, and how the tool enforces it.
+type CapSet struct {
+	Cap         Cap    `json:"cap"`
+	Enforcement string `json:"enforcement"`
+	// Tolerance is how far a target may be exceeded, in the tool's own
+	// words, cited. Required for a target.
+	Tolerance string `json:"tolerance,omitempty"`
+}
+
+// Check says what is wrong with a set_cap answer, or "".
+func (c CapSet) Check() string {
+	if why := c.Cap.Check(); why != "" {
+		return why
+	}
+	switch {
+	case c.Enforcement != CapHard && c.Enforcement != CapTarget:
+		return fmt.Sprintf("the cap's enforcement is %q; want hard or target", c.Enforcement)
+	case c.Enforcement == CapTarget && strings.TrimSpace(c.Tolerance) == "":
+		return "the cap is a target without saying how far the tool may exceed it"
+	}
+	return ""
+}
+
 // Secrets are the values a request carries that must leave a run nowhere but
 // in the request itself: every credential, and an authorize call's code and
 // state.
@@ -302,8 +359,9 @@ var verbPurposes = map[Verb]string{
 		"for field with what was approved.",
 	VerbReadMetrics: "Answer an asset's metrics, each a value with its quality flags or the sentence for why there " +
 		"is none -- never a zero for a number the tool does not have.",
-	VerbSetCap: "Set the most an asset may spend -- daily, total, and an end date -- for a kind that involves " +
-		"spend; declared a hard cap or a target the tool may exceed.",
+	VerbSetCap: "Set the most an asset may spend -- a total, a daily amount or both, and always an end date -- for " +
+		"a kind that involves spend, and answer the cap as the tool now holds it: hard, or a target the tool may " +
+		"exceed, saying by how much.",
 	VerbListOwned: "List the assets whose name starts with the prefix given -- Mendel's own, found by the name it " +
 		"gave them -- so nothing is created twice. A tool that keeps no name for a kind declines it.",
 	VerbReadSeries: "Read a measure over a window as one point per step of the granularity asked, empty steps " +
