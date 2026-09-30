@@ -124,7 +124,7 @@ stands now (2026-09-29).
 | 6 | Authorization is one verb with steps, and begin produces secrets too | **Fixed**: `authorize` in contract 2, and on the server (connect, callback, disconnect) |
 | 7 | Publish needs to carry Mendel's idempotency key | **Fixed**: `idempotency_key` in contract 2 |
 | 8 | `publish(ref, when)` assumes a draft | **Fixed**: publish takes a payload when there is no draft |
-| 9 | The connection's config has no declared shape | **Open** |
+| 9 | The connection's config has no declared shape | Fixed: `connection.config` (Mastodon 0.3.0) |
 | 10 | `describe_shape` and `limits` repeat the manifest | **Fixed**: both removed in contract 2 |
 | 11 | Credentials mix secrets with identifiers | **Fixed**: a credential can be marked `public` |
 | 12 | A read can cost money, and the manifest cannot say so as data | **Open** |
@@ -218,7 +218,12 @@ visible.)
 a setting of the project's (§6: "a setting is config"), and the wrapper
 defaults it to followers-only, but nothing tells Mendel the setting exists or
 what it may be. `wrapper.json` declares the connection's fields; it should
-declare the config's too, the same way.
+declare the config's too, the same way. *Fixed (2026-09-29):* `wrapper.json`
+declares each setting under `connection.config`, with the values it takes and
+its default, and Mendel sends only a declared setting with a value the wrapper
+takes (`ConnectionSpec.CheckConfig`). Mastodon 0.3.0 declares `visibility`:
+public, unlisted or private, not direct, since a direct post that mentions
+nobody reaches nobody.
 
 **10. `describe_shape` and `limits` repeat what the manifest already says.**
 The manifest carries each kind's shape (refined per instance: 475 characters

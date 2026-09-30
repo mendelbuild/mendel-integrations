@@ -2,6 +2,8 @@ package wrapperprotocol
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 	"regexp"
 )
 
@@ -58,10 +60,70 @@ type ConnectionSpec struct {
 	Credentials []Field `json:"credentials"`
 	Endpoint    *Field  `json:"endpoint,omitempty"`
 	// Authorize says the credentials are produced by the authorize verb
-	// (contract 2-draft) rather than typed by a person: the connect form
-	// offers a link to the tool instead of fields, and the names above are
-	// what authorize is expected to answer.
+	// (contract 2) rather than typed by a person: the connect form offers a
+	// link to the tool instead of fields, and the names above are what
+	// authorize is expected to answer.
 	Authorize bool `json:"authorize,omitempty"`
+	// Config is every setting the wrapper reads from a run's
+	// Connection.Config: the project's own choices for the tool (doc 35 §6:
+	// "a setting is config"), such as who sees a post. Declared so Mendel can
+	// ask for them, show them where a person approves what they govern, and
+	// refuse a value the wrapper does not take; a setting not declared here
+	// is never sent (SPIKE.md finding 9).
+	Config []Setting `json:"config,omitempty"`
+}
+
+// Setting is one setting of a connection's config.
+type Setting struct {
+	// Name is the key the wrapper reads it by in Connection.Config.
+	Name  string `json:"name"`
+	Label string `json:"label"`
+	Help  string `json:"help,omitempty"`
+	// Values are the only values the wrapper accepts, when it accepts only
+	// some; empty means any text.
+	Values []string `json:"values,omitempty"`
+	// Default is what the wrapper does when the setting is not set, said so
+	// a person knows what they get by leaving it; one of Values when those
+	// are given.
+	Default string `json:"default,omitempty"`
+}
+
+// CheckConfig says what is wrong with a project's config for this
+// connection, or "": a setting the wrapper does not declare, or a value it
+// does not take.
+func (c ConnectionSpec) CheckConfig(config map[string]any) string {
+	declared := map[string]Setting{}
+	for _, s := range c.Config {
+		declared[s.Name] = s
+	}
+	names := make([]string, 0, len(config))
+	for name := range config {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		s, ok := declared[name]
+		if !ok {
+			return fmt.Sprintf("the wrapper takes no setting %q", name)
+		}
+		v, isText := config[name].(string)
+		if !isText {
+			return fmt.Sprintf("setting %s is not text", name)
+		}
+		if len(s.Values) > 0 && !contains(s.Values, v) {
+			return fmt.Sprintf("setting %s is %q; the wrapper takes %s", name, v, strings.Join(s.Values, ", "))
+		}
+	}
+	return ""
+}
+
+func contains(list []string, v string) bool {
+	for _, x := range list {
+		if x == v {
+			return true
+		}
+	}
+	return false
 }
 
 // Field is one value a person enters to connect.
@@ -83,6 +145,7 @@ type Field struct {
 var (
 	slugPattern       = regexp.MustCompile(`^[a-z][a-z0-9-]*$`)
 	credentialPattern = regexp.MustCompile(`^[A-Z][A-Z0-9_]*$`)
+	settingPattern    = regexp.MustCompile(`^[a-z][a-z0-9_]*$`)
 	claimLevels       = map[string]bool{"supported": true, "partial": true, "declined": true}
 )
 
@@ -125,6 +188,27 @@ func (d Description) Check() string {
 		seen[c.Name] = true
 		if c.Label == "" {
 			return fmt.Sprintf("credential %q has no label to show beside its field", c.Name)
+		}
+	}
+	settings := map[string]bool{}
+	for _, s := range d.Connection.Config {
+		switch {
+		case !settingPattern.MatchString(s.Name):
+			return fmt.Sprintf("config setting %q is not a lower-case name", s.Name)
+		case settings[s.Name]:
+			return fmt.Sprintf("config setting %q is declared twice", s.Name)
+		case s.Label == "":
+			return fmt.Sprintf("config setting %q has no label to show beside it", s.Name)
+		case len(s.Values) > 0 && s.Default != "" && !contains(s.Values, s.Default):
+			return fmt.Sprintf("config setting %q defaults to %q, which is not one of its values", s.Name, s.Default)
+		}
+		settings[s.Name] = true
+		seen := map[string]bool{}
+		for _, v := range s.Values {
+			if v == "" || seen[v] {
+				return fmt.Sprintf("config setting %q lists an empty or repeated value", s.Name)
+			}
+			seen[v] = true
 		}
 	}
 	for verb, level := range d.Claims {

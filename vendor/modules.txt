@@ -1,3 +1,3 @@
-# github.com/mendelbuild/mendelbuild v0.0.0-20260930001941-142de61f99ec
+# github.com/mendelbuild/mendelbuild v0.0.0-20260930012421-462c072ce49c
 ## explicit; go 1.26.1
 github.com/mendelbuild/mendelbuild/wrapperprotocol

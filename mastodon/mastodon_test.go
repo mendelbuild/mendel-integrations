@@ -310,6 +310,15 @@ func TestWrapperJSONAgreesWithWhatTheWrapperAnswers(t *testing.T) {
 	if d.Version != wrapperVersion || d.Contract != wp.ContractVersion || d.SpecSource != specSource || !d.Connection.Authorize {
 		t.Errorf("wrapper.json says %q %q %q authorize=%v", d.Version, d.Contract, d.SpecSource, d.Connection.Authorize)
 	}
+	// The one setting the wrapper reads is declared, with the default it
+	// applies, and Mendel will send only the values it declares.
+	spec := d.Connection
+	if len(spec.Config) != 1 || spec.Config[0].Name != "visibility" || spec.Config[0].Default != "private" {
+		t.Errorf("wrapper.json's config is %+v; the wrapper reads visibility and defaults to private", spec.Config)
+	}
+	if why := spec.CheckConfig(map[string]any{"visibility": "direct"}); why == "" {
+		t.Error("direct is declared, and a direct post that mentions nobody reaches nobody")
+	}
 	names := map[string]bool{}
 	for _, c := range d.Connection.Credentials {
 		names[c.Name] = true
