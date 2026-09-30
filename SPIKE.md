@@ -109,9 +109,35 @@ protocol and still report a wrong kind of number. A publisher was not
 generated (the only venue is a real account, and each run posts), which is
 the next thing to try once the suite can judge meaning as well as form.
 
+## Status of each finding
+
+The findings below are a log, in the order they were found; this is where each
+stands now (2026-09-29).
+
+| # | Finding | Status |
+|---|---|---|
+| 1 | The contract could not carry a publisher or a search | **Fixed** by contract 2: authorize, the action surface and search are in the wire types, and Mastodon and Tavily pass live on them |
+| 2 | An open family of metrics (Plausible's goals) cannot be declared | Half: the wrapper no longer misuses a quality flag; declaring a family is **open** |
+| 3 | A self-hosted Plausible is a complete venue | Holds; `venues/plausible-ce/` |
+| 4 | An accepted event is not a counted one | **Fixed**: the venue waits on ingestion and reads its traffic back |
+| 5 | The suite checks consistency, not truth | **Fixed**: a venue hands the suite its truth (`-expect`) |
+| 6 | Authorization is one verb with steps, and begin produces secrets too | **Fixed**: `authorize` in contract 2, and on the server (connect, callback, disconnect) |
+| 7 | Publish needs to carry Mendel's idempotency key | **Fixed**: `idempotency_key` in contract 2 |
+| 8 | `publish(ref, when)` assumes a draft | **Fixed**: publish takes a payload when there is no draft |
+| 9 | The connection's config has no declared shape | **Open** |
+| 10 | `describe_shape` and `limits` repeat the manifest | **Fixed**: both removed in contract 2 |
+| 11 | Credentials mix secrets with identifiers | **Fixed**: a credential can be marked `public` |
+| 12 | A read can cost money, and the manifest cannot say so as data | **Open** |
+| 13 | A search is honest only against a window it can prove | **Fixed**: Tavily declares it; the suite checks every windowed result's date |
+| 14 | A generated wrapper reported rates as sums | Half: every metric declares its kind in contract 2, and a rate offered as a sum is refused; an additivity check that would catch a mislabelled kind is **open** |
+| 15 | The harness and a wrapper drifted from the family schema | Half: both follow it now; building the suite's payloads from the schema itself is **open** |
+| 16 | A generated wrapper stretches verbs to claim more | **Open**: the suite says untested, and nothing rejects it |
+| 17 | Mendel's executor is brittle in long runs | Filed: mendelbuild/mendelbuild#45, #46 |
+
 ## Findings
 
-**1. The contract cannot carry a publisher or a search today.** Of the
+**1. The contract cannot carry a publisher or a search today.** *(Fixed by
+contract 2; see the status table.)* Of the
 fifteen verbs, the wire types have arguments and answers for three:
 `VerbCall` carries only `read_series`/`read_total` arguments (measure, window,
 granularity, filter), and `VerbResult` only a manifest, a series or a total.
