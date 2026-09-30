@@ -5,12 +5,25 @@
 # and promote.yml copies one, by digest, into the production package,
 # ghcr.io/mendelbuild/wrappers-prod, under the same tag.
 #
-# Every wrapper shares one package per environment, and the tag says which
-# wrapper it is. The set of packages is fixed, one per kind of image a
-# project's cluster pulls, per environment: wrappers-staging and wrappers-prod
-# here, and Mendel's wrapper-shim-staging and wrapper-shim-prod, pushed by its
+# A wrapper Mendel wrote itself (Mendel's doc 35 §20, decision 2) arrives on a
+# branch of its own, generated/<env>/<slug>-<version>-<id>, never on main, and
+# is built into that environment's candidates package,
+#
+#   ghcr.io/mendelbuild/wrapper-candidates-<env>:<slug>-<version>-<commit>
+#
+# which the Mendel installation that pushed it reads the digest from and
+# registers as an unreviewed candidate. Nobody here reviews it first: git is
+# the record, not a review. Merging it to main is what promotes it, through
+# the path above.
+#
+# Every wrapper shares one package per environment and kind, and the tag says
+# which wrapper it is. The set of packages is fixed, one per kind of image a
+# project's cluster pulls, per environment: wrappers-staging and
+# wrappers-prod, wrapper-candidates-staging and wrapper-candidates-prod here,
+# and Mendel's wrapper-shim-staging and wrapper-shim-prod, pushed by its
 # gke-deploy.sh. Staging's and production's images are kept apart by package,
-# and a new wrapper is a tag, never a package (README, "Publishing").
+# reviewed wrappers are kept apart from candidates, and a new wrapper is a
+# tag, never a package (README, "Publishing").
 #
 # Nothing here checks for a collision, because none can happen:
 #
@@ -36,7 +49,7 @@ name: images
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'generated/staging/**', 'generated/prod/**']
   workflow_dispatch:
 
 permissions:
@@ -62,6 +75,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       wrappers: ${{ steps.list.outputs.wrappers }}
+      package: ${{ steps.package.outputs.package }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -96,6 +110,33 @@ jobs:
             fi
           done
           exit $status
+      # main builds into wrappers-staging. A generated branch builds its one
+      # wrapper into its environment's candidates package, and may change
+      # nothing but that wrapper's directory: not the contract, not go.mod,
+      # not this workflow, which a branch push runs from its own copy of.
+      - id: package
+        if: ${{ startsWith(github.ref, 'refs/heads/generated/') }}
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          env=$(printf '%s' "$BRANCH" | cut -d/ -f2)
+          name=$(printf '%s' "$BRANCH" | cut -d/ -f3-)
+          case "$env" in staging|prod) ;; *) echo "::error::$BRANCH names no environment (staging or prod)"; exit 1 ;; esac
+          # <slug>-<version>-<id>: neither the version nor Mendel's id holds
+          # a '-', so the slug is what is left of the last two.
+          slug=$(printf '%s' "$name" | sed -E 's/-[^-]+-[^-]+$//')
+          if [ -z "$slug" ] || [ ! -f "$slug/wrapper.json" ]; then
+            echo "::error::$BRANCH names no wrapper directory in this commit"
+            exit 1
+          fi
+          git fetch -q origin main
+          outside=$(git diff --name-only origin/main...HEAD | grep -v "^$slug/" || true)
+          if [ -n "$outside" ]; then
+            echo "::error::a generated branch changes only its wrapper's directory, $slug/; this one also changes: $outside"
+            exit 1
+          fi
+          echo "package=wrapper-candidates-$env" >> "$GITHUB_OUTPUT"
+          echo "slug=$slug" >> "$GITHUB_OUTPUT"
       # Only what this push changed is built, so an unchanged wrapper keeps
       # the tags it has. A change to what every wrapper builds from (the
       # contract module, go.mod, this workflow), a manual run, or a push
@@ -103,8 +144,13 @@ jobs:
       - id: list
         env:
           BEFORE: ${{ github.event.before }}
+          GENERATED: ${{ steps.package.outputs.slug }}
         run: |
           all=$(for f in */wrapper.json; do dirname "$f"; done)
+          if [ -n "$GENERATED" ]; then
+            echo "wrappers=$(printf '%s' "$GENERATED" | jq -R -s -c '[.]')" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           if [ "${{ github.event_name }}" != "push" ] || [ -z "$BEFORE" ] ||
              ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null ||
              git diff --name-only "$BEFORE" HEAD | grep -qE '^(contract/|go\.mod$|go\.sum$|\.github/workflows/images\.yml$)'; then
@@ -121,6 +167,8 @@ jobs:
     strategy:
       matrix:
         wrapper: ${{ fromJSON(needs.find.outputs.wrappers) }}
+    env:
+      PACKAGE: ${{ needs.find.outputs.package || 'wrappers-staging' }}
     steps:
       - uses: actions/checkout@v4
       - id: describe
@@ -142,7 +190,7 @@ jobs:
       - uses: imjasonh/setup-crane@v0.7
       - id: existing
         env:
-          IMAGE: ghcr.io/mendelbuild/wrappers-staging:${{ steps.describe.outputs.tag }}
+          IMAGE: ghcr.io/mendelbuild/${{ env.PACKAGE }}:${{ steps.describe.outputs.tag }}
         run: |
           if out=$(crane digest "$IMAGE" 2>&1); then
             echo "$IMAGE is already published as $out; not pushing it again."
@@ -166,10 +214,11 @@ jobs:
           file: ${{ matrix.wrapper }}/Dockerfile
           platforms: linux/amd64
           push: true
-          tags: ghcr.io/mendelbuild/wrappers-staging:${{ steps.describe.outputs.tag }}
+          tags: ghcr.io/mendelbuild/${{ env.PACKAGE }}:${{ steps.describe.outputs.tag }}
       - id: published
         run: echo "digest=${{ steps.existing.outputs.digest || steps.build.outputs.digest }}" >> "$GITHUB_OUTPUT"
       - name: Say what to register
+        if: ${{ env.PACKAGE == 'wrappers-staging' }}
         run: |
           {
             echo "### ${{ matrix.wrapper }} ${{ steps.describe.outputs.version }} (built at ${{ steps.describe.outputs.commit }})"
@@ -185,16 +234,26 @@ jobs:
             echo "tag \`${{ steps.describe.outputs.tag }}\` and digest \`${{ steps.published.outputs.digest }}\`,"
             echo "and register the same digest from ghcr.io/mendelbuild/wrappers-prod on production."
           } >> "$GITHUB_STEP_SUMMARY"
+      - name: Say what Mendel registers
+        if: ${{ env.PACKAGE != 'wrappers-staging' }}
+        run: |
+          {
+            echo "### ${{ matrix.wrapper }} ${{ steps.describe.outputs.version }}, written by Mendel (built at ${{ steps.describe.outputs.commit }})"
+            echo
+            echo "Published as \`ghcr.io/mendelbuild/$PACKAGE:${{ steps.describe.outputs.tag }}\`, digest \`${{ steps.published.outputs.digest }}\`."
+            echo "The Mendel that pushed this branch registers it itself, as an unreviewed candidate. Merging it"
+            echo "to main is what promotes it."
+          } >> "$GITHUB_STEP_SUMMARY"
       # Asked with no credentials, as a project's cluster would ask, and after
       # the summary, so the digest is printed either way. A package this
       # workflow creates takes the repository's visibility, so this passes
       # while the repository is public; it is here so that stops being silent.
       - name: The image can be pulled anonymously
         run: |
-          token=$(curl -fsS "https://ghcr.io/token?scope=repository:mendelbuild/wrappers-staging:pull" | jq -r .token) || true
+          token=$(curl -fsS "https://ghcr.io/token?scope=repository:mendelbuild/$PACKAGE:pull" | jq -r .token) || true
           if ! curl -fsSI -H "Authorization: Bearer $token" \
               -H "Accept: application/vnd.oci.image.index.v1+json, application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.docker.distribution.manifest.v2+json" \
-              "https://ghcr.io/v2/mendelbuild/wrappers-staging/manifests/${{ steps.published.outputs.digest }}" >/dev/null; then
-            echo "::error::ghcr.io/mendelbuild/wrappers-staging cannot be pulled anonymously, so no project's cluster could run this wrapper. Make the package public, once: https://github.com/orgs/mendelbuild/packages/container/wrappers-staging/settings (Danger Zone, Change visibility, Public)."
+              "https://ghcr.io/v2/mendelbuild/$PACKAGE/manifests/${{ steps.published.outputs.digest }}" >/dev/null; then
+            echo "::error::ghcr.io/mendelbuild/$PACKAGE cannot be pulled anonymously, so no project's cluster could run this wrapper. Make the package public, once: https://github.com/orgs/mendelbuild/packages/container/$PACKAGE/settings (Danger Zone, Change visibility, Public)."
             exit 1
           fi

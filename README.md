@@ -403,6 +403,23 @@ whose directory changed (all of them when the contract module, `go.mod` or
 the workflow changed), publishes it to `wrappers-staging`, and prints the
 `mendel-tool tools register` line with the digest in the run's summary.
 
+A wrapper Mendel wrote itself does not come through `main`. Mendel pushes it
+to a branch of its own, `generated/<env>/<slug>-<version>-<id>`, and the same
+workflow builds that one wrapper into the environment's candidates package,
+
+```
+ghcr.io/mendelbuild/wrapper-candidates-staging:<slug>-<version>-<commit>
+ghcr.io/mendelbuild/wrapper-candidates-prod:<slug>-<version>-<commit>
+```
+
+where the Mendel that pushed it reads the digest and registers it as an
+unreviewed candidate, which runs only for a project whose person agreed to
+it. Nobody here reviews it first: the branch is the record, not a review. A
+generated branch may change only its wrapper's directory, and the workflow
+fails one that changes anything else, since a branch push runs the workflow
+from the branch's own copy. Merging one to `main` is what promotes it to
+every project, through the path below.
+
 Once staging has run it, `.github/workflows/promote.yml`, run by hand from
 Actions with the tag and digest `images.yml` printed, copies that digest into
 `wrappers-prod` under the same tag. The copy keeps the digest, and the workflow
@@ -412,13 +429,13 @@ production tag that already names one, and promoting twice is a no-op.
 
 **Why two packages rather than one per wrapper.** The set of packages under
 `ghcr.io/mendelbuild` is fixed: one per kind of image a project's cluster
-pulls, per environment. There are four, these two and Mendel's
-`wrapper-shim-staging` and `wrapper-shim-prod`, pushed by its
-`deploy/gke-deploy.sh`. A new kind of image adds a package; a new wrapper
+pulls, per environment. There are six: these two, the two candidates
+packages, and Mendel's `wrapper-shim-staging` and `wrapper-shim-prod`, pushed
+by its `deploy/gke-deploy.sh`. A new kind of image adds a package; a new wrapper
 never does. Every one has to be public, because a private package can be
 registered but cannot be pulled by any project's cluster. A package first
 pushed by a workflow in this public repository takes the repository's
-visibility, so these two were public from their first push; the shim's,
+visibility, so these were public from their first push; the shim's,
 first pushed with a person's token, were created private and made public once,
 by hand, since GitHub has no API for it. Both workflows still check that what
 they wrote can be pulled with no credentials, and name the settings page to
