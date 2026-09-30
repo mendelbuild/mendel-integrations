@@ -17,6 +17,34 @@ A wrapper reaches an installation one way: a Mendel admin registers its
 Tools tab or `mendel-tool tools register`. No Mendel deploy is involved. This
 repository's workflow publishes the images (see "Publishing").
 
+## What each verb is for
+
+The contract states each verb's purpose (`Verb.Purpose` in `wrapperprotocol`),
+and the suite holds a manifest to it where a check can reach. **Declining is a
+designed outcome, not a gap to fill.** A verb claimed by stretching it to
+something the tool can do -- an edit called `append_update`, a recent page
+called `list_owned`, a rate called a sum -- keeps the protocol and breaks the
+meaning, which is the one failure the suite finds hardest to catch (SPIKE.md
+findings 14 and 16). When the tool cannot do what a verb is for, decline it,
+with the reason.
+
+| Verb | What it is for | How the suite checks it |
+|---|---|---|
+| `probe` | Say what the wrapper can do against this account | The manifest's form, and nothing claimed beyond `wrapper.json` |
+| `authorize` | Connect through the tool's own authorization: begin, complete, refresh, revoke | begin's URL carries the state; refresh where declared; revoke with `-revoke` |
+| `draft` | An asset that is not live until publish makes it so | Not live after draft; live after publish by its ref |
+| `publish` | Make an asset live, from a draft or a payload | A valid asset is published; the same idempotency key is the same asset; the shape's boundaries are refused |
+| `status` | What is configured and in effect: not live, live, gone | Live after publish, gone after retract |
+| `append_update` | Append an update to a **log-shaped** asset, keeping every earlier one; never an edit | Refused for a wrapper none of whose kinds is log-shaped |
+| `retract` | Take an asset back, safely twice, never destroying history | Twice, the same outcome |
+| `read_back` | The asset as the tool holds it, in the kind's family fields | Equal to what was approved, field for field; refused once gone |
+| `read_metrics` | An asset's metrics, a value or why there is none | Every metric the manifest lists is answered as declared |
+| `set_cap` | The most an asset may spend, for a kind that **involves spend** | Refused for a wrapper none of whose kinds involves spend |
+| `list_owned` | The assets whose **name** starts with the prefix given | The published asset is listed for its prefix and not for another |
+| `read_series` | One point per step, empty steps included | Steps, order, window; a granularity not declared is refused |
+| `read_total` | One number, as the metric's kind allows | Against the venue's truth where it knows it |
+| `search` | Items matching a query, honest about the window | Within the limit; every windowed result dated inside it |
+
 ## Conformance
 
 `cmd/conformance` runs a wrapper through the contract against a venue account

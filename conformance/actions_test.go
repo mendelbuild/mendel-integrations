@@ -26,6 +26,16 @@ type publisher struct {
 	readsImpressions bool // reads an unavailable metric as zero
 	stateless        bool // begin's URL does not carry the state
 	tokenInField     bool // puts the token in a field other than credentials
+
+	lists        bool // honours list_owned, by name
+	listsRecent  bool // honours list_owned, and lists everything whatever the prefix
+	drafts       bool // honours draft
+	draftIsLive  bool // honours draft, and a draft is live the moment it is made
+	claimsAppend bool // claims append_update for a social post
+	claimsSetCap bool // claims set_cap for a social post
+
+	names       map[string]string
+	draftsHeld map[string]json.RawMessage
 }
 
 func (p *publisher) manifest() *wp.CapabilityManifest {
@@ -50,6 +60,18 @@ func (p *publisher) manifest() *wp.CapabilityManifest {
 	for _, v := range []wp.Verb{wp.VerbProbe, wp.VerbAuthorize, wp.VerbPublish, wp.VerbStatus, wp.VerbReadBack,
 		wp.VerbReadMetrics, wp.VerbRetract} {
 		m.Verbs[v] = wp.VerbSupport{Level: wp.VerbSupported}
+	}
+	if p.lists || p.listsRecent {
+		m.Verbs[wp.VerbListOwned] = wp.VerbSupport{Level: wp.VerbSupported}
+	}
+	if p.drafts || p.draftIsLive {
+		m.Verbs[wp.VerbDraft] = wp.VerbSupport{Level: wp.VerbSupported}
+	}
+	if p.claimsAppend {
+		m.Verbs[wp.VerbAppendUpdate] = wp.VerbSupport{Level: wp.VerbPartial, Caveat: "edits the text"}
+	}
+	if p.claimsSetCap {
+		m.Verbs[wp.VerbSetCap] = wp.VerbSupport{Level: wp.VerbSupported}
 	}
 	return m
 }
@@ -99,7 +121,35 @@ func (p *publisher) answer(conn wp.Connection, c wp.VerbCall) wp.VerbResult {
 		default:
 			r.Refused = "no step " + c.Step
 		}
+	case wp.VerbListOwned:
+		r.Owned = []string{}
+		for ref, name := range p.names {
+			if _, live := p.posts[ref]; live && (p.listsRecent || strings.HasPrefix(name, c.Prefix)) {
+				r.Owned = append(r.Owned, ref)
+			}
+		}
+	case wp.VerbDraft:
+		p.next++
+		id := fmt.Sprint(p.next)
+		p.names[id] = c.Name
+		if p.draftIsLive {
+			p.posts[id] = c.Payload // live at once: the mutant
+		} else {
+			p.draftsHeld[id] = c.Payload
+		}
+		r.Ref = id
 	case wp.VerbPublish:
+		if c.Ref != "" {
+			if body, ok := p.draftsHeld[c.Ref]; ok {
+				p.posts[c.Ref] = body
+				delete(p.draftsHeld, c.Ref)
+			} else if _, live := p.posts[c.Ref]; !live {
+				r.Refused = "no such draft"
+				return r
+			}
+			r.Ref = c.Ref
+			return r
+		}
 		var post map[string]any
 		json.Unmarshal(c.Payload, &post)
 		text, _ := post["text"].(string)
@@ -117,10 +167,12 @@ func (p *publisher) answer(conn wp.Connection, c wp.VerbCall) wp.VerbResult {
 		}
 		p.next++
 		id := fmt.Sprint(p.next)
-		p.posts[id], p.byKey[c.IdempotencyKey] = c.Payload, id
+		p.posts[id], p.byKey[c.IdempotencyKey], p.names[id] = c.Payload, id, c.Name
 		r.Ref, r.URL = id, "https://pub.example/"+id
 	case wp.VerbStatus:
-		if _, ok := p.posts[c.Ref]; ok || p.liveAfterRetract {
+		if _, held := p.draftsHeld[c.Ref]; held {
+			r.Status = &wp.AssetStatus{Configured: "draft", Effective: wp.EffectiveNotLive}
+		} else if _, ok := p.posts[c.Ref]; ok || p.liveAfterRetract {
 			r.Status = &wp.AssetStatus{Configured: "public", Effective: wp.EffectiveLive}
 		} else {
 			r.Status = &wp.AssetStatus{Configured: "deleted", Effective: wp.EffectiveGone}
@@ -153,13 +205,15 @@ func (p *publisher) answer(conn wp.Connection, c wp.VerbCall) wp.VerbResult {
 			return r
 		}
 		delete(p.posts, c.Ref)
+		delete(p.draftsHeld, c.Ref)
 		r.Retracted = wp.RetractedDeleted
 	}
 	return r
 }
 
 func runPublisher(p *publisher) Report {
-	p.posts, p.byKey = map[string]json.RawMessage{}, map[string]string{}
+	p.posts, p.byKey, p.names, p.draftsHeld = map[string]json.RawMessage{}, map[string]string{}, map[string]string{},
+		map[string]json.RawMessage{}
 	d := wp.Description{Tool: wp.Tool{Slug: "pub", Name: "Pub"}, Version: "1.0", Contract: wp.ContractVersion,
 		Image: "pub:dev", Command: []string{"/pub"}, SpecSource: "https://pub.example/api",
 		Connection: wp.ConnectionSpec{Account: &wp.Field{Label: "Account"}, Authorize: true,
@@ -202,6 +256,10 @@ func TestEveryPublisherMutantIsCaught(t *testing.T) {
 		"reads an unavailable metric": {&publisher{readsImpressions: true}, "answers every metric"},
 		"drops the state":             {&publisher{stateless: true}, "carries Mendel's state"},
 		"puts the token in a field":   {&publisher{tokenInField: true}, "no credential appears"},
+		"lists whatever the prefix":   {&publisher{listsRecent: true}, "answers by the prefix"},
+		"claims append for a post":    {&publisher{claimsAppend: true}, "claimed only for them"},
+		"claims a cap for a post":     {&publisher{claimsSetCap: true}, "claimed only for them"},
+		"a draft that is live":        {&publisher{draftIsLive: true}, "not live until published"},
 	} {
 		r := runPublisher(tc.p)
 		caught := false
@@ -222,5 +280,20 @@ func TestEveryPublisherMutantIsCaught(t *testing.T) {
 		if len(tc.p.posts) != 0 {
 			t.Errorf("%s: the run left %d post(s) published", name, len(tc.p.posts))
 		}
+	}
+}
+
+// A publisher that honours list_owned by name and a draft that is not live
+// passes those checks, and leaves nothing behind.
+func TestAPublisherThatListsAndDraftsHonestlyPasses(t *testing.T) {
+	p := &publisher{lists: true, drafts: true}
+	r := runPublisher(p)
+	for _, c := range r.Checks {
+		if c.Outcome == Fail || c.Outcome == Untested {
+			t.Errorf("%s (%s): %s: %s", c.Name, c.Verb, c.Outcome, c.Detail)
+		}
+	}
+	if len(p.posts) != 0 || len(p.draftsHeld) != 0 {
+		t.Errorf("left %d posts and %d drafts", len(p.posts), len(p.draftsHeld))
 	}
 }

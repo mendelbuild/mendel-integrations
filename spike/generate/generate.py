@@ -111,6 +111,11 @@ Write the wrapper in {slug}/ as package main. It is {role}. It speaks contract
   vendored; GOFLAGS already says so). Never call the real API from a test, and
   do not try to reach it at all: there is no key here.
 
+Each verb's purpose is in surface.go (Verb.Purpose) and in GUIDE.md's
+"What each verb is for". Declining a verb the tool cannot do what it is for is
+a designed outcome: decline it with the reason rather than stretch it to
+something the tool can do.
+
 When you finish, Mendel builds the wrapper and runs its conformance suite
 against a real {name} account. If anything does not pass, you will be told
 what, and asked to fix it."""

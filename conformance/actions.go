@@ -137,6 +137,54 @@ func (s *suite) revokeAtEnd(ctx context.Context, m *wp.CapabilityManifest) {
 // payloads the suite knows how to write, per External Asset Kind: a valid
 // asset, and the boundary cases §8 asks for. A kind the suite has no row for
 // is reported untested.
+// kindTraits are an External Asset Kind's traits, as far as they decide
+// which verbs apply to it (doc 35 §7). They are Mendel's knowledge, never a
+// wrapper's claim about itself, so the suite keeps its own table: it mirrors
+// the kinds Mendel seeds (internal/external/assetkinds), and a kind missing
+// from it cannot be judged.
+type kindTraits struct {
+	logShaped bool // append_update applies
+	spend     bool // set_cap applies
+}
+
+var seededKinds = map[string]kindTraits{
+	"social_post": {}, "listing": {}, "direct_message": {}, "email_broadcast": {},
+}
+
+// onlyForTrait checks a verb that applies only to kinds with a trait is not
+// claimed by a wrapper none of whose kinds has it: a stretched verb (SPIKE.md
+// finding 16). Where a kind does have it, the suite has no payload for such a
+// kind yet, and says so.
+func (s *suite) onlyForTrait(m *wp.CapabilityManifest, v wp.Verb, trait string, has func(kindTraits) bool) {
+	c := Check{Name: "a verb that applies only to some kinds is claimed only for them", Verb: v}
+	var with, unknown []string
+	for name, k := range m.Kinds {
+		if k.Level == wp.VerbDeclined {
+			continue
+		}
+		t, known := seededKinds[name]
+		switch {
+		case !known:
+			unknown = append(unknown, name)
+		case has(t):
+			with = append(with, name)
+		}
+	}
+	sort.Strings(with)
+	sort.Strings(unknown)
+	switch {
+	case len(with) > 0:
+		c.Outcome, c.Detail = Untested, fmt.Sprintf("%s applies to %s; the suite has no payloads for a %s kind yet",
+			v, strings.Join(with, ", "), trait)
+	case len(unknown) > 0:
+		c.Outcome, c.Detail = Untested, fmt.Sprintf("the suite does not know the traits of %s", strings.Join(unknown, ", "))
+	default:
+		c.Outcome, c.Detail = Fail, fmt.Sprintf("claimed %s, and none of the kinds this wrapper acts on is %s. "+
+			"What %s is for: %s", m.Verbs[v].Level, trait, v, v.Purpose())
+	}
+	s.add(c)
+}
+
 type payloads struct {
 	// valid is a valid asset that fits max, the shape's maxLength for
 	// lengthOf, or any length when the shape declares none (0).
@@ -264,8 +312,11 @@ func (s *suite) boundaries(ctx context.Context, kind string, ks wp.KindSupport, 
 func (s *suite) lifecycle(ctx context.Context, m *wp.CapabilityManifest, kind string, valid map[string]any) {
 	honours := func(v wp.Verb) bool { return m.Verbs[v].Level != wp.VerbDeclined }
 	key := "conformance-" + nonce()
+	// Every asset the suite makes is named under a prefix of its own, which
+	// is what list_owned is checked by.
+	prefix := "mendel-conformance-" + nonce()
 	pub := wp.VerbCall{Verb: wp.VerbPublish, AssetKind: kind, Payload: raw(valid), When: &wp.When{Mode: wp.WhenNow},
-		IdempotencyKey: key}
+		IdempotencyKey: key, Name: prefix + "-post"}
 
 	c := Check{Name: "a valid asset is published", Verb: wp.VerbPublish, Calls: 1}
 	res, elapsed, err := s.one(ctx, pub)
@@ -338,6 +389,12 @@ func (s *suite) lifecycle(ctx context.Context, m *wp.CapabilityManifest, kind st
 	}
 	if honours(wp.VerbReadMetrics) {
 		s.readMetrics(ctx, m, ref)
+	}
+	if honours(wp.VerbListOwned) {
+		s.listOwned(ctx, prefix, ref)
+	}
+	if honours(wp.VerbDraft) {
+		s.draftLifecycle(ctx, m, kind, valid, prefix)
 	}
 
 	c = Check{Name: "retract takes the asset back, and is safe twice", Verb: wp.VerbRetract, Calls: 2}
@@ -471,6 +528,82 @@ func (s *suite) credentialsStayPut() {
 		c.Outcome, c.Detail = Fail, fmt.Sprintf("found %s in the wrapper's output", strings.Join(leaks, ", "))
 	default:
 		c.Outcome, c.Detail = Pass, fmt.Sprintf("%d credential(s) looked for in %d outputs", len(values), len(s.seen))
+	}
+	s.add(c)
+}
+
+// listOwned checks list_owned answers by the prefix it is given: the asset
+// the suite just published, under its own prefix, is listed for that prefix
+// and not for another. A wrapper that lists a recent page, or everything,
+// fails the second half (SPIKE.md finding 16).
+func (s *suite) listOwned(ctx context.Context, prefix, ref string) {
+	c := Check{Name: "list_owned answers by the prefix it is given", Verb: wp.VerbListOwned, Calls: 2}
+	other := "mendel-conformance-other-" + nonce()
+	res, elapsed, err := s.call(ctx, wp.VerbCall{Verb: wp.VerbListOwned, Prefix: prefix},
+		wp.VerbCall{Verb: wp.VerbListOwned, Prefix: other})
+	c.Elapsed = elapsed
+	has := func(refs []string) bool {
+		for _, r := range refs {
+			if r == ref {
+				return true
+			}
+		}
+		return false
+	}
+	switch {
+	case err != nil:
+		c.Outcome, c.Detail = Fail, err.Error()
+	case len(res) < 2 || !res[len(res)-1].Succeeded():
+		c.Outcome, c.Detail = Fail, res[len(res)-1].Why()
+	case !has(res[0].Owned):
+		c.Outcome, c.Detail = Fail, fmt.Sprintf("the asset named %s-post was not listed for the prefix %s. What "+
+			"list_owned is for: %s", prefix, prefix, wp.VerbListOwned.Purpose())
+	case has(res[1].Owned):
+		c.Outcome, c.Detail = Fail, fmt.Sprintf("the asset named %s-post was listed for the prefix %s, which it does "+
+			"not start with: the listing ignores the prefix. What list_owned is for: %s", prefix, other, wp.VerbListOwned.Purpose())
+	default:
+		c.Outcome = Pass
+	}
+	s.add(c)
+}
+
+// draftLifecycle checks draft makes an asset that is not live, and publish
+// by its ref makes it live; the asset is retracted whatever happens.
+func (s *suite) draftLifecycle(ctx context.Context, m *wp.CapabilityManifest, kind string, valid map[string]any, prefix string) {
+	c := Check{Name: "a draft is not live until published by its ref", Verb: wp.VerbDraft, Calls: 1}
+	res, elapsed, err := s.one(ctx, wp.VerbCall{Verb: wp.VerbDraft, AssetKind: kind, Payload: raw(valid), Name: prefix + "-draft"})
+	c.Elapsed = elapsed
+	switch {
+	case err != nil:
+		c.Outcome, c.Detail = Fail, err.Error()
+	case !res.Succeeded() || res.Ref == "":
+		c.Outcome, c.Detail = Fail, "draft made no asset: "+res.Why()
+	}
+	if c.Outcome == Fail {
+		s.add(c)
+		return
+	}
+	ref := res.Ref
+	defer func() { _, _, _ = s.one(ctx, wp.VerbCall{Verb: wp.VerbRetract, Ref: ref}) }()
+	if m.Verbs[wp.VerbStatus].Level != wp.VerbDeclined {
+		c.Calls++
+		st, _, err := s.one(ctx, wp.VerbCall{Verb: wp.VerbStatus, Ref: ref})
+		if err != nil || st.Status == nil || st.Status.Effective != wp.EffectiveNotLive {
+			c.Outcome, c.Detail = Fail, fmt.Sprintf("a draft's status is %+v; a draft is not live. What draft is for: %s",
+				st.Status, wp.VerbDraft.Purpose())
+			s.add(c)
+			return
+		}
+	}
+	c.Calls++
+	pub, _, err := s.one(ctx, wp.VerbCall{Verb: wp.VerbPublish, Ref: ref, When: &wp.When{Mode: wp.WhenNow}})
+	switch {
+	case err != nil:
+		c.Outcome, c.Detail = Fail, err.Error()
+	case !pub.Succeeded():
+		c.Outcome, c.Detail = Fail, "publishing the draft by its ref: "+pub.Why()
+	default:
+		c.Outcome = Pass
 	}
 	s.add(c)
 }

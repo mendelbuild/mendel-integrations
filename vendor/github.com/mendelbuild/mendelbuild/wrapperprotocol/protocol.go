@@ -131,6 +131,10 @@ type VerbCall struct {
 	Ref            string          `json:"ref,omitempty"`
 	When           *When           `json:"when,omitempty"`
 	IdempotencyKey string          `json:"idempotency_key,omitempty"`
+	// Name is Mendel's name for an asset it drafts or publishes, starting
+	// with its naming prefix; the wrapper keeps it where the tool keeps a
+	// name, and list_owned finds assets by it.
+	Name string `json:"name,omitempty"`
 	Query          string          `json:"query,omitempty"`
 	Limit          int             `json:"limit,omitempty"`
 	Prefix         string          `json:"prefix,omitempty"`

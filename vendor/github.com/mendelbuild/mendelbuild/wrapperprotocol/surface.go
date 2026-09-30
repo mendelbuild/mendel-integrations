@@ -230,3 +230,42 @@ func quotable(stdout []byte) string {
 	}
 	return tail(string(stdout), 512)
 }
+
+// Purpose is what a verb is for, in one sentence: what a wrapper that
+// honours it must do, and so what a wrapper that cannot should decline
+// rather than stretch. A manifest is held to these by the conformance suite
+// where a check can reach, and a person reviewing a wrapper reads them
+// beside its claims. They are the contract's meaning, as the types are its
+// form: a generated wrapper keeps the form more reliably than the meaning
+// (SPIKE.md findings 14 and 16), so the meaning is written down here.
+func (v Verb) Purpose() string { return verbPurposes[v] }
+
+var verbPurposes = map[Verb]string{
+	VerbProbe: "Say what this wrapper can do against this account: every verb, metric and kind, with the venue, " +
+		"the entitlements observed and what the tool's terms allow to be kept.",
+	VerbAuthorize: "Connect an account through the tool's own authorization: begin answers where to send the " +
+		"person, complete turns the code they bring back into credentials, refresh renews them, revoke ends the grant.",
+	VerbDraft: "Create an asset that is not live -- seen by no one -- which publish later makes live. A tool with " +
+		"no such state declines it.",
+	VerbPublish: "Make an asset live for its audience: a draft by its ref, or a payload directly where there is no " +
+		"draft; now, at an instant, or announced.",
+	VerbStatus: "Say what is configured for an asset and what is in effect -- not live, live, or gone -- and any " +
+		"review the tool holds it in.",
+	VerbAppendUpdate: "Append an update to a log-shaped asset, such as an incident, keeping every earlier update. " +
+		"Not an edit: a kind that is not log-shaped declines it.",
+	VerbRetract: "Take an asset back -- paused, deleted, archived or resolved -- safely twice, and never by " +
+		"destroying the history the tool keeps.",
+	VerbReadBack: "Answer the asset as the tool now holds it, in the kind's family fields, to be compared field " +
+		"for field with what was approved.",
+	VerbReadMetrics: "Answer an asset's metrics, each a value with its quality flags or the sentence for why there " +
+		"is none -- never a zero for a number the tool does not have.",
+	VerbSetCap: "Set the most an asset may spend -- daily, total, and an end date -- for a kind that involves " +
+		"spend; declared a hard cap or a target the tool may exceed.",
+	VerbListOwned: "List the assets whose name starts with the prefix given -- Mendel's own, found by the name it " +
+		"gave them -- so nothing is created twice. A tool that keeps no name for a kind declines it.",
+	VerbReadSeries: "Read a measure over a window as one point per step of the granularity asked, empty steps " +
+		"included; a granularity the tool lacks is refused, never substituted.",
+	VerbReadTotal: "Read a measure over a window as one number, as its metric's kind allows.",
+	VerbSearch: "Find items the tool holds that match a query, within a window where given, up to a limit, " +
+		"honestly: a result it cannot place in the window is left out.",
+}

@@ -279,7 +279,7 @@ func (s *suite) honoured(ctx context.Context, m *wp.CapabilityManifest) {
 	// The action surface is exercised as one lifecycle, which is how it is
 	// judged: what was published is read back, counted and retracted.
 	lifecycle := map[wp.Verb]bool{wp.VerbPublish: true, wp.VerbStatus: true, wp.VerbReadBack: true,
-		wp.VerbReadMetrics: true, wp.VerbRetract: true}
+		wp.VerbReadMetrics: true, wp.VerbRetract: true, wp.VerbListOwned: true, wp.VerbDraft: true}
 	for _, v := range wp.ContractVerbs() {
 		level := m.Verbs[v].Level
 		if level == wp.VerbDeclined || v == wp.VerbProbe || (lifecycle[v] && v != wp.VerbPublish) {
@@ -296,6 +296,10 @@ func (s *suite) honoured(ctx context.Context, m *wp.CapabilityManifest) {
 			s.publishLifecycle(ctx, m)
 		case wp.VerbSearch:
 			s.search(ctx, m)
+		case wp.VerbAppendUpdate:
+			s.onlyForTrait(m, v, "log-shaped", func(t kindTraits) bool { return t.logShaped })
+		case wp.VerbSetCap:
+			s.onlyForTrait(m, v, "involves spend", func(t kindTraits) bool { return t.spend })
 		default:
 			s.add(Check{Name: "an honoured verb is exercised", Verb: v, Outcome: Untested,
 				Detail: fmt.Sprintf("declared %s; the suite cannot exercise %s yet", level, v)})
@@ -303,6 +307,16 @@ func (s *suite) honoured(ctx context.Context, m *wp.CapabilityManifest) {
 	}
 	if m.Verbs[wp.VerbReadTotal].Level != wp.VerbDeclined && m.Verbs[wp.VerbReadSeries].Level != wp.VerbDeclined {
 		s.seriesAgreesWithTotal(ctx, m)
+	}
+	// The lifecycle's other verbs are exercised on a published asset; with
+	// publish declined there is none, and each honoured one goes untested.
+	if m.Verbs[wp.VerbPublish].Level == wp.VerbDeclined {
+		for v := range lifecycle {
+			if v != wp.VerbPublish && m.Verbs[v].Level != wp.VerbDeclined {
+				s.add(Check{Name: "an honoured verb is exercised", Verb: v, Outcome: Untested,
+					Detail: fmt.Sprintf("the suite exercises %s on a published asset, and publish is declined", v)})
+			}
+		}
 	}
 }
 

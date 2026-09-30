@@ -131,7 +131,7 @@ stands now (2026-09-29).
 | 13 | A search is honest only against a window it can prove | **Fixed**: Tavily declares it; the suite checks every windowed result's date |
 | 14 | A generated wrapper reported rates as sums | Half: every metric declares its kind in contract 2, and a rate offered as a sum is refused; an additivity check that would catch a mislabelled kind is **open** |
 | 15 | The harness and a wrapper drifted from the family schema | Half: both follow it now; building the suite's payloads from the schema itself is **open** |
-| 16 | A generated wrapper stretches verbs to claim more | **Open**: the suite says untested, and nothing rejects it |
+| 16 | A generated wrapper stretches verbs to claim more | **Fixed**: every verb states its purpose in the contract (`Verb.Purpose`), and the suite now fails a stretched claim: `list_owned` is exercised by name and prefix, `append_update` and `set_cap` are refused for kinds without the trait, `draft` must not be live. The generated Mastodon wrapper, untested on these before, now fails both |
 | 17 | Mendel's executor is brittle in long runs | Filed: mendelbuild/mendelbuild#45, #46 |
 
 ## Findings
@@ -310,7 +310,11 @@ same remedy: the contract saying what a verb is for in terms a check can hold
 a manifest to (`append_update` only for a kind with the log-shaped trait;
 `list_owned` answering by the prefix it was given, exercised by publishing
 with a known prefix and listing it back), and an agent told that declining is
-a designed outcome, not a gap to fill.
+a designed outcome, not a gap to fill. *Done:* the purposes are in the
+contract and the README, the generation prompt says declining is a designed
+outcome, and the suite's new checks fail the generated wrapper's two stretched
+verbs (21 pass, 2 fail) while the hand-written one, which declines both, still
+passes.
 
 **17. Mendel's executor is brittle in ways only a long run shows.** It ends a
 run when the model replies without a tool call, even when the reply is
