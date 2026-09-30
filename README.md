@@ -420,6 +420,20 @@ fails one that changes anything else, since a branch push runs the workflow
 from the branch's own copy. Merging one to `main` is what promotes it to
 every project, through the path below.
 
+**What keeps unreviewed code away from the packages.** A wrapper's own code
+runs in the workflow twice -- its tests, and its Dockerfile's `RUN` steps --
+and neither job can write a package: both have a token that only reads this
+public repository, no checkout leaves that token on disk
+(`persist-credentials: false`), and the image is built from `git archive`,
+without `.git`, into a tarball. A separate job, the only one with
+`packages: write`, checks out nothing and pushes that tarball. And a
+generated branch cannot change the workflow itself only because the token
+Mendel pushes with has `contents: write` and **not** the Workflows
+permission, which GitHub requires for any change under `.github/workflows`:
+that token must stay contents-only. The workflow also fails a generated
+branch that changes anything outside its wrapper's directory, renames
+included.
+
 Once staging has run it, `.github/workflows/promote.yml`, run by hand from
 Actions with the tag and digest `images.yml` printed, copies that digest into
 `wrappers-prod` under the same tag. The copy keeps the digest, and the workflow

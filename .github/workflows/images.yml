@@ -52,15 +52,30 @@ on:
     branches: [main, 'generated/staging/**', 'generated/prod/**']
   workflow_dispatch:
 
+# Every job asks for the least it needs. Only `push` can write a package, and
+# it checks out nothing and runs nothing a wrapper's author wrote: it pushes
+# the tarball `build` made. `test` and `build` run a wrapper's own code -- its
+# tests, its Dockerfile's RUN steps -- with a token that can only read this
+# public repository, which no checkout leaves on disk (persist-credentials:
+# false), from a build context without .git. A wrapper Mendel wrote is code
+# nobody has reviewed, and this is what keeps it from reaching a package.
+#
+# A generated branch cannot change this file only because the token Mendel
+# pushes with has contents: write and not the Workflows permission, which
+# GitHub requires to push a change under .github/workflows. That token must
+# stay contents-only (README, "Publishing").
 permissions:
   contents: read
-  packages: write
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
@@ -73,6 +88,8 @@ jobs:
 
   find:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       wrappers: ${{ steps.list.outputs.wrappers }}
       package: ${{ steps.package.outputs.package }}
@@ -80,6 +97,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Every wrapper's directory is named for its slug
         run: |
           status=0
@@ -130,7 +148,9 @@ jobs:
             exit 1
           fi
           git fetch -q origin main
-          outside=$(git diff --name-only origin/main...HEAD | grep -v "^$slug/" || true)
+          # --no-renames, or moving contract/ or go.mod into $slug/ would be
+          # reported by its new path alone, and pass.
+          outside=$(git diff --no-renames --name-only origin/main...HEAD | grep -v "^$slug/" || true)
           if [ -n "$outside" ]; then
             echo "::error::a generated branch changes only its wrapper's directory, $slug/; this one also changes: $outside"
             exit 1
@@ -153,70 +173,111 @@ jobs:
           fi
           if [ "${{ github.event_name }}" != "push" ] || [ -z "$BEFORE" ] ||
              ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null ||
-             git diff --name-only "$BEFORE" HEAD | grep -qE '^(contract/|go\.mod$|go\.sum$|\.github/workflows/images\.yml$)'; then
+             git diff --no-renames --name-only "$BEFORE" HEAD | grep -qE '^(contract/|go\.mod$|go\.sum$|\.github/workflows/images\.yml$)'; then
             changed="$all"
           else
-            changed=$(git diff --name-only "$BEFORE" HEAD | cut -d/ -f1 | sort -u | grep -Fxf <(echo "$all") || true)
+            changed=$(git diff --no-renames --name-only "$BEFORE" HEAD | cut -d/ -f1 | sort -u | grep -Fxf <(echo "$all") || true)
           fi
           echo "wrappers=$(printf '%s\n' $changed | jq -R -s -c 'split("\n") | map(select(length > 0))')" >> "$GITHUB_OUTPUT"
 
-  publish:
+  # Builds each wrapper's image into a tarball, with nothing that can write a
+  # package: the Dockerfile's RUN steps are the wrapper author's code.
+  build:
     needs: [test, find]
     if: ${{ needs.find.outputs.wrappers != '[]' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        wrapper: ${{ fromJSON(needs.find.outputs.wrappers) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Describe, and make a build context without .git
+        run: |
+          mkdir -p /tmp/out
+          version=$(jq -r .version '${{ matrix.wrapper }}/wrapper.json')
+          commit=$(git rev-parse --short=12 HEAD)
+          printf '%s' "$version" > /tmp/out/version
+          printf '%s' "$commit" > /tmp/out/commit
+          printf '%s' "${{ matrix.wrapper }}-$version-$commit" > /tmp/out/tag
+          mkdir -p /tmp/context
+          git archive HEAD | tar -x -C /tmp/context
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: /tmp/context
+          file: /tmp/context/${{ matrix.wrapper }}/Dockerfile
+          platforms: linux/amd64
+          push: false
+          outputs: type=docker,dest=/tmp/out/image.tar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: image-${{ matrix.wrapper }}
+          path: /tmp/out
+          retention-days: 1
+
+  # Pushes what build made. The only job that can write a package, and it
+  # runs no wrapper's code: it has no checkout, only the tarball and three
+  # lines of text.
+  push:
+    needs: [find, build]
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
     strategy:
       matrix:
         wrapper: ${{ fromJSON(needs.find.outputs.wrappers) }}
     env:
       PACKAGE: ${{ needs.find.outputs.package || 'wrappers-staging' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: image-${{ matrix.wrapper }}
+          path: /tmp/out
+      # What build wrote is read as data and held to the one shape a tag
+      # has, <wrapper>-<version>-<commit>, before anything uses it.
       - id: describe
         run: |
-          echo "version=$(jq -r .version '${{ matrix.wrapper }}/wrapper.json')" >> "$GITHUB_OUTPUT"
-          echo "commit=$(git rev-parse --short=12 HEAD)" >> "$GITHUB_OUTPUT"
-          echo "tag=${{ matrix.wrapper }}-$(jq -r .version '${{ matrix.wrapper }}/wrapper.json')-$(git rev-parse --short=12 HEAD)" >> "$GITHUB_OUTPUT"
-      - uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          tag=$(cat /tmp/out/tag)
+          if ! printf '%s' "$tag" | grep -qxE '${{ matrix.wrapper }}-[A-Za-z0-9._]+-[0-9a-f]{12,40}'; then
+            echo "::error::build handed over the tag \"$tag\", which is not <wrapper>-<version>-<commit>"
+            exit 1
+          fi
+          echo "version=$(cat /tmp/out/version)" >> "$GITHUB_OUTPUT"
+          echo "commit=$(cat /tmp/out/commit)" >> "$GITHUB_OUTPUT"
+          echo "tag=$(cat /tmp/out/tag)" >> "$GITHUB_OUTPUT"
+      - uses: imjasonh/setup-crane@v0.7
+      - name: Log in to ghcr.io
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: printf '%s' "$TOKEN" | crane auth login ghcr.io -u "${{ github.actor }}" --password-stdin
       # A tag already published is never pushed again. Re-running this job, or
       # a run whose push landed before a later step failed, would otherwise
-      # rebuild the same commit, which is not byte-identical, and move the tag
-      # off the digest an installation may already have registered; promote.yml
-      # would then refuse that digest. So a tag that exists is reused as it is,
-      # and a bad build is replaced by a new commit, never by a re-run.
-      - uses: imjasonh/setup-crane@v0.7
-      - id: existing
+      # push a rebuild of the same commit, which is not byte-identical, and
+      # move the tag off the digest an installation may already have
+      # registered; promote.yml would then refuse that digest. So a tag that
+      # exists is reused as it is, and a bad build is replaced by a new
+      # commit, never by a re-run.
+      - id: published
         env:
           IMAGE: ghcr.io/mendelbuild/${{ env.PACKAGE }}:${{ steps.describe.outputs.tag }}
         run: |
           if out=$(crane digest "$IMAGE" 2>&1); then
             echo "$IMAGE is already published as $out; not pushing it again."
             echo "digest=$out" >> "$GITHUB_OUTPUT"
+            exit 0
           # A missing tag is MANIFEST_UNKNOWN; a package not created yet can
           # answer DENIED. Either way it is absent, and a real failure to
           # authenticate fails the push below instead.
-          elif printf '%s' "$out" | grep -qE 'MANIFEST_UNKNOWN|NAME_UNKNOWN|DENIED|404'; then
-            echo "$IMAGE is not published yet."
-          else
+          elif ! printf '%s' "$out" | grep -qE 'MANIFEST_UNKNOWN|NAME_UNKNOWN|DENIED|404'; then
             echo "::error::Could not tell whether $IMAGE is published: $out"
             exit 1
           fi
-      - uses: docker/setup-buildx-action@v3
-        if: ${{ steps.existing.outputs.digest == '' }}
-      - id: build
-        if: ${{ steps.existing.outputs.digest == '' }}
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ${{ matrix.wrapper }}/Dockerfile
-          platforms: linux/amd64
-          push: true
-          tags: ghcr.io/mendelbuild/${{ env.PACKAGE }}:${{ steps.describe.outputs.tag }}
-      - id: published
-        run: echo "digest=${{ steps.existing.outputs.digest || steps.build.outputs.digest }}" >> "$GITHUB_OUTPUT"
+          crane push /tmp/out/image.tar "$IMAGE"
+          echo "digest=$(crane digest "$IMAGE")" >> "$GITHUB_OUTPUT"
       - name: Say what to register
         if: ${{ env.PACKAGE == 'wrappers-staging' }}
         run: |
