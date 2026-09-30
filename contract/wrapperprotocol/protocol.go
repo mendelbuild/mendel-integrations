@@ -3,11 +3,9 @@
 // a wrapper reads and writes, the Capability Manifest and its check, and the
 // runner that starts a wrapper image.
 //
-// Standard library only, and in a module of its own
-// (github.com/mendelbuild/mendel-integrations/contract), so everything that
-// speaks the protocol can import it without importing anything else: Mendel's
-// server, its tool registry and wrapper shim, the conformance harness beside
-// it, and every wrapper.
+// Standard library only, so everything that speaks the protocol can import it
+// without importing the server: the seam package, the tool registry that
+// mendel-tool uses to verify a wrapper, and a wrapper's own tests.
 package wrapperprotocol
 
 import (
@@ -28,8 +26,9 @@ import (
 // the first that did not succeed. The shape mirrors cmd/mendel-adapter --
 // JSON in, JSON out, a report Mendel's own code checks -- and the types here
 // are the wire format, which is why a wrapper written in Go can import them
-// rather than restating them. It lives beside the wrappers in
-// mendel-integrations, never in Mendel's own repository, which imports it.
+// rather than restating them. The package sits at the module root, outside
+// internal/, for exactly that: wrappers live in the mendel-integrations
+// repository, never in this one.
 //
 // A wrapper declares what it can do at probe time and Mendel plans only from
 // that. Nothing here reaches around the contract: a wrapper that cannot serve
@@ -701,6 +700,10 @@ func ParseWrapperResponse(stdout []byte, calls int) (WrapperResponse, error) {
 	for i, r := range resp.Results {
 		if len(r.Credentials) > 0 && r.Verb != VerbAuthorize {
 			return WrapperResponse{}, fmt.Errorf("result %d (%s) carries credentials, which only authorize may return", i, r.Verb)
+		}
+		if r.Status != nil && !effectiveStates[r.Status.Effective] {
+			return WrapperResponse{}, fmt.Errorf("result %d (%s) says the asset is %q, which is not a state the contract has (not_live, live, gone)",
+				i, r.Verb, r.Status.Effective)
 		}
 	}
 	if len(resp.Results) == 0 {

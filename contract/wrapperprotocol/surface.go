@@ -1,8 +1,10 @@
 package wrapperprotocol
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"sort"
 	"strings"
 	"time"
@@ -76,6 +78,8 @@ const (
 	EffectiveLive    = "live"
 	EffectiveGone    = "gone"
 )
+
+var effectiveStates = map[string]bool{EffectiveNotLive: true, EffectiveLive: true, EffectiveGone: true}
 
 // Retract outcomes (§6). Retract is safe to call twice: a second call on an
 // asset already retracted answers the same outcome.
@@ -220,6 +224,45 @@ func redactedCalls(calls []VerbCall) []VerbCall {
 		out[i] = c
 	}
 	return out
+}
+
+// Secrets are the values a request carries that must leave a run nowhere but
+// in the request itself: every credential, and an authorize call's code and
+// state.
+func (r WrapperRequest) Secrets() []string {
+	var out []string
+	for _, v := range r.Connection.Credentials {
+		out = append(out, v)
+	}
+	for _, c := range r.Calls {
+		out = append(out, c.Code, c.State)
+	}
+	return out
+}
+
+// Scrub replaces each secret in text a wrapper wrote -- its stderr, quoted in
+// a failure a project's members read -- with [redacted]: as written, and in
+// the forms a request commonly carries one (URL-escaped, base64). A value
+// shorter than four characters is left alone, since replacing it would
+// garble the text and it protects nothing. What a wrapper encodes some other
+// way it can still leak; this catches the common mistake of logging a request
+// or an error that echoes one.
+func Scrub(text string, secrets []string) string {
+	var forms []string
+	for _, s := range secrets {
+		if len(s) < 4 {
+			continue
+		}
+		forms = append(forms, s, url.QueryEscape(s), url.PathEscape(s),
+			base64.StdEncoding.EncodeToString([]byte(s)), base64.RawStdEncoding.EncodeToString([]byte(s)),
+			base64.URLEncoding.EncodeToString([]byte(s)), base64.RawURLEncoding.EncodeToString([]byte(s)))
+	}
+	// Longest first, so a secret containing another is replaced whole.
+	sort.Slice(forms, func(i, j int) bool { return len(forms[i]) > len(forms[j]) })
+	for _, f := range forms {
+		text = strings.ReplaceAll(text, f, "[redacted]")
+	}
+	return text
 }
 
 // quotable is the end of a wrapper's output for an error message, or a note

@@ -154,3 +154,26 @@ func TestEveryVerbHasAPurpose(t *testing.T) {
 		t.Errorf("%d purposes for %d verbs", len(verbPurposes), len(ContractVerbs()))
 	}
 }
+
+// A status answer names one of the contract's states, or the answer is
+// refused: a state Mendel has no word for cannot be stored or shown.
+func TestAStatusOutsideTheContractIsRefused(t *testing.T) {
+	for effective, ok := range map[string]bool{"live": true, "not_live": true, "gone": true, "active": false, "": false} {
+		raw := `{"results":[{"verb":"status","status":{"configured":"x","effective":"` + effective + `"}}]}`
+		_, err := ParseWrapperResponse([]byte(raw), 1)
+		if (err == nil) != ok {
+			t.Errorf("%q: %v", effective, err)
+		}
+	}
+}
+
+// Every credential and an authorize call's code and state are secrets, and a
+// value too short to protect is left alone.
+func TestSecretsAndScrub(t *testing.T) {
+	r := WrapperRequest{Connection: Connection{Credentials: map[string]string{"A": "alpha-key", "B": "abc"}},
+		Calls: []VerbCall{{Verb: VerbAuthorize, Code: "the-code", State: "the-state"}}}
+	got := Scrub("alpha-key the-code the-state abc", r.Secrets())
+	if got != "[redacted] [redacted] [redacted] abc" {
+		t.Errorf("scrubbed to %q", got)
+	}
+}
