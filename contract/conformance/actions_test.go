@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	wp "github.com/mendelbuild/mendelbuild/wrapperprotocol"
+	wp "github.com/mendelbuild/mendel-integrations/contract/wrapperprotocol"
 )
 
 // publisher is a small wrapper for a publishing tool, written against the

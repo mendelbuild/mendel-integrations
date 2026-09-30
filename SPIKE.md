@@ -14,7 +14,7 @@ was seen, what it means for the contract, and what, if anything, was done.
 
 | Step | State |
 |---|---|
-| Conformance harness (`conformance/`, `cmd/conformance`) | Built; mutation-tested against ten mutants |
+| Conformance harness (`contract/conformance/`, `contract/cmd/conformance`) | Built; mutation-tested against ten mutants |
 | Local venue for Plausible (`venues/plausible-ce/`) | Built; 36 of 36 checks pass against the real thing |
 | Contract 2-draft (`wrapperprotocol/draft.go` in Mendel) | Built: `authorize` with steps, a secret `credentials` field, the action surface's and search's fields |
 | Harness for the draft | Built: authorize, a publish-to-retract lifecycle, boundaries, a credential-leak check; 19 mutants across two fakes |

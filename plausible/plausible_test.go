@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mendelbuild/mendelbuild/wrapperprotocol"
+	"github.com/mendelbuild/mendel-integrations/contract/wrapperprotocol"
 )
 
 // Every verb against recorded responses from a local server standing in for

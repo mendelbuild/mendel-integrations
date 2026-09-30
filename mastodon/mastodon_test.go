@@ -13,7 +13,7 @@ import (
 	"sync"
 	"testing"
 
-	wp "github.com/mendelbuild/mendelbuild/wrapperprotocol"
+	wp "github.com/mendelbuild/mendel-integrations/contract/wrapperprotocol"
 )
 
 // fakeInstance plays the parts of a Mastodon instance the wrapper uses, as

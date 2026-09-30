@@ -31,7 +31,7 @@ import (
 	"strings"
 	"time"
 
-	wp "github.com/mendelbuild/mendelbuild/wrapperprotocol"
+	wp "github.com/mendelbuild/mendel-integrations/contract/wrapperprotocol"
 )
 
 // Runner runs one request against the wrapper under test, and answers what

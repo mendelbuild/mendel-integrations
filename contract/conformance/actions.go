@@ -11,7 +11,7 @@ import (
 	"sort"
 	"strings"
 
-	wp "github.com/mendelbuild/mendelbuild/wrapperprotocol"
+	wp "github.com/mendelbuild/mendel-integrations/contract/wrapperprotocol"
 )
 
 // The draft's checks: authorize, the action surface as one lifecycle, and

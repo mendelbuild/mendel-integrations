@@ -6,7 +6,7 @@ import (
 	"time"
 	"strings"
 
-	wp "github.com/mendelbuild/mendelbuild/wrapperprotocol"
+	wp "github.com/mendelbuild/mendel-integrations/contract/wrapperprotocol"
 )
 
 // searcher is a small search tool on the draft, with switches that each

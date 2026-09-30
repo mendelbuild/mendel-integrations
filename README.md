@@ -45,17 +45,31 @@ with the reason.
 | `read_total` | One number, as the metric's kind allows | Against the venue's truth where it knows it |
 | `search` | Items matching a query, honest about the window | Within the limit; every windowed result dated inside it |
 
+## The contract module
+
+`contract/` is a Go module of its own,
+`github.com/mendelbuild/mendel-integrations/contract`, standard library only:
+`wrapperprotocol` (the wire types, `wrapper.json`, the manifest and its
+checks) and the conformance harness. Mendel's server imports it to run and
+check wrappers, and a wrapper written in Go imports it rather than restating
+the types. Nothing in it names a tool, and it never imports anything else in
+this repository.
+
+The wrappers here build against the copy beside them (a `replace` in the root
+`go.mod`), so a contract change and the wrappers it affects land in one
+commit. Mendel moves to a new contract commit on purpose, by `go get`.
+
 ## Conformance
 
-`cmd/conformance` runs a wrapper through the contract against a venue account
+`contract/cmd/conformance` runs a wrapper through the contract against a venue account
 of your own and says, check by check, what it found: pass, fail, warn, or
 untested (a verb the suite cannot exercise yet, which is never a pass). It
-needs no Mendel and no database. The suite is `conformance/`, and its own tests
+needs no Mendel and no database. The suite is `contract/conformance/`, and its own tests
 are mutants of a small wrapper that each break one rule and must each be caught
 by the check about that rule (doc 35 §8).
 
 ```bash
-go run -mod=vendor ./cmd/conformance -file <tool>/wrapper.json \
+go run ./contract/cmd/conformance -file <tool>/wrapper.json \
     (-image <image> | -cmd <built binary>) -account <venue account> [-endpoint URL] [-at RFC3339] [-json out.json]
 ```
 
@@ -132,9 +146,9 @@ result is refused.
 A process that cannot read its request at all exits non-zero; that is the only
 case where stdout may be empty.
 
-## Verbs in contract 1
+## What a data source reads
 
-The contract has fifteen verbs (§6). A data source honours three:
+The contract has fourteen verbs (the table above). A data source honours three:
 
 | Verb | Arguments | Answer |
 |---|---|---|
@@ -143,7 +157,8 @@ The contract has fifteen verbs (§6). A data source honours three:
 | `read_total` | `measure`, `window`, `filter?` | `total`: `{"value", "quality"?}` |
 
 - `measure` is `{"event", "aggregation"}`, aggregation one of `count`,
-  `unique`, `sum`.
+  `unique`, `sum`, `value`, as the metric's declared kind allows (count:
+  count or unique; people: unique; sum: sum; rate and average: value).
 - `window` is `{"start", "end"}`, instants, half-open. A zero `start` means
   the total to date.
 - `granularity` is `hour`, `day`, `week` or `month`. A wrapper **refuses** a
@@ -357,7 +372,7 @@ ghcr.io/mendelbuild/wrappers-prod:<slug>-<version>-<commit>
 ```
 
 On every push to `main`, `.github/workflows/images.yml` builds each wrapper
-whose directory changed (all of them when the vendored protocol, `go.mod` or
+whose directory changed (all of them when the contract module, `go.mod` or
 the workflow changed), publishes it to `wrappers-staging`, and prints the
 `mendel-tool tools register` line with the digest in the run's summary.
 

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	wp "github.com/mendelbuild/mendelbuild/wrapperprotocol"
+	wp "github.com/mendelbuild/mendel-integrations/contract/wrapperprotocol"
 )
 
 // fake is a small data source that keeps the contract, with switches that

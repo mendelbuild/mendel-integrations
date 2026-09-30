@@ -13,7 +13,7 @@ import (
 	"net/url"
 	"strings"
 
-	wp "github.com/mendelbuild/mendelbuild/wrapperprotocol"
+	wp "github.com/mendelbuild/mendel-integrations/contract/wrapperprotocol"
 )
 
 // specSource is the documentation the wrapper was written against.

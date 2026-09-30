@@ -135,8 +135,8 @@ cat <<EOF
 
 Ready. From the repository root:
 
-  go build -mod=vendor -o /tmp/plausible ./plausible
-  go run -mod=vendor ./cmd/conformance -file plausible/wrapper.json -cmd /tmp/plausible \\
+  go build -o /tmp/plausible ./plausible
+  go run ./contract/cmd/conformance -file plausible/wrapper.json -cmd /tmp/plausible \\
       -account $SITE -endpoint http://localhost:$PORT -expect venues/plausible-ce/.work/expected.json -at $(date -u -j -v+1d -f %Y-%m-%d "$DAY" +%Y-%m-%dT06:00:00Z 2>/dev/null || date -u -d "$DAY + 1 day" +%Y-%m-%dT06:00:00Z)
 
 with the key in the environment: set -a; . venues/plausible-ce/.work/venue.env; set +a

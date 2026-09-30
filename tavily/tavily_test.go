@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	wp "github.com/mendelbuild/mendelbuild/wrapperprotocol"
+	wp "github.com/mendelbuild/mendel-integrations/contract/wrapperprotocol"
 )
 
 const key = "tvly-FAKE-SECRET-KEY"

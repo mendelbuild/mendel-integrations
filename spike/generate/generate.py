@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""The spike's generation test: can an agent write a wrapper from a spec,
+"""
+Kept as the spike ran it (2026-09-28), before the contract became the module
+in contract/ and the vendor directory went away: it reads vendor/ and will
+not run as it stands. Doc 35 §20 stream C moves this loop into Mendel's
+server, which is where it is maintained.
+The spike's generation test: can an agent write a wrapper from a spec,
 with the conformance suite as its test?  (SPIKE.md; doc 35 §8, §19.)
 
 For one tool, blind -- the agent never sees the hand-written wrapper, a key,

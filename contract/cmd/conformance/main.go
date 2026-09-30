@@ -42,8 +42,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mendelbuild/mendel-integrations/conformance"
-	wp "github.com/mendelbuild/mendelbuild/wrapperprotocol"
+	"github.com/mendelbuild/mendel-integrations/contract/conformance"
+	wp "github.com/mendelbuild/mendel-integrations/contract/wrapperprotocol"
 )
 
 // options are the flags both forms share.

@@ -51,8 +51,12 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      # The wrapper protocol is vendored, since Mendel's module is private.
-      - run: go vet -mod=vendor ./... && go test -mod=vendor ./...
+          # Nothing is fetched (the contract is beside the wrappers), so
+          # there is no go.sum to key a cache on.
+          cache: false
+      # The contract is a module of its own, which the wrappers build against
+      # through a replace, so both are checked.
+      - run: go vet ./... && go test ./... && cd contract && go vet ./... && go test ./...
 
   find:
     runs-on: ubuntu-latest
@@ -94,7 +98,7 @@ jobs:
           exit $status
       # Only what this push changed is built, so an unchanged wrapper keeps
       # the tags it has. A change to what every wrapper builds from (the
-      # vendored protocol, go.mod, this workflow), a manual run, or a push
+      # contract module, go.mod, this workflow), a manual run, or a push
       # whose parent is unknown builds them all.
       - id: list
         env:
@@ -103,7 +107,7 @@ jobs:
           all=$(for f in */wrapper.json; do dirname "$f"; done)
           if [ "${{ github.event_name }}" != "push" ] || [ -z "$BEFORE" ] ||
              ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null ||
-             git diff --name-only "$BEFORE" HEAD | grep -qE '^(vendor/|go\.mod$|go\.sum$|\.github/workflows/images\.yml$)'; then
+             git diff --name-only "$BEFORE" HEAD | grep -qE '^(contract/|go\.mod$|go\.sum$|\.github/workflows/images\.yml$)'; then
             changed="$all"
           else
             changed=$(git diff --name-only "$BEFORE" HEAD | cut -d/ -f1 | sort -u | grep -Fxf <(echo "$all") || true)

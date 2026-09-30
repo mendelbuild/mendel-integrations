@@ -18,7 +18,7 @@ import (
 	"os"
 	"time"
 
-	wp "github.com/mendelbuild/mendelbuild/wrapperprotocol"
+	wp "github.com/mendelbuild/mendel-integrations/contract/wrapperprotocol"
 )
 
 // wrapperVersion is this wrapper's own version, recorded as its provenance.

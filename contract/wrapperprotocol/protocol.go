@@ -3,9 +3,11 @@
 // a wrapper reads and writes, the Capability Manifest and its check, and the
 // runner that starts a wrapper image.
 //
-// Standard library only, so everything that speaks the protocol can import it
-// without importing the server: the seam package, the tool registry that
-// mendel-tool uses to verify a wrapper, and a wrapper's own tests.
+// Standard library only, and in a module of its own
+// (github.com/mendelbuild/mendel-integrations/contract), so everything that
+// speaks the protocol can import it without importing anything else: Mendel's
+// server, its tool registry and wrapper shim, the conformance harness beside
+// it, and every wrapper.
 package wrapperprotocol
 
 import (
@@ -26,9 +28,8 @@ import (
 // the first that did not succeed. The shape mirrors cmd/mendel-adapter --
 // JSON in, JSON out, a report Mendel's own code checks -- and the types here
 // are the wire format, which is why a wrapper written in Go can import them
-// rather than restating them. The package sits at the module root, outside
-// internal/, for exactly that: wrappers live in the mendel-integrations
-// repository, never in this one.
+// rather than restating them. It lives beside the wrappers in
+// mendel-integrations, never in Mendel's own repository, which imports it.
 //
 // A wrapper declares what it can do at probe time and Mendel plans only from
 // that. Nothing here reaches around the contract: a wrapper that cannot serve

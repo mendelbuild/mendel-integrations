@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	wp "github.com/mendelbuild/mendelbuild/wrapperprotocol"
+	wp "github.com/mendelbuild/mendel-integrations/contract/wrapperprotocol"
 )
 
 // searchQuery is what the suite searches for: a phrase common enough that
