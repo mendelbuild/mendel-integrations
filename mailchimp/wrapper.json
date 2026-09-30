@@ -1,0 +1,60 @@
+{
+  "tool": {
+    "slug": "mailchimp",
+    "name": "Mailchimp",
+    "homepage": "https://mailchimp.com",
+    "categories": ["send email"]
+  },
+  "version": "0.1.2",
+  "contract": "2",
+  "image": "mendel-tool-mailchimp:dev",
+  "command": ["/mailchimp"],
+  "spec_source": "https://mailchimp.com/developer/marketing/api/campaigns/",
+  "connection": {
+    "account": {
+      "label": "Audience ID",
+      "help": "The Mailchimp Audience (List) ID the reminder campaigns are sent to, found under Audience > Settings > Audience name and defaults."
+    },
+    "credentials": [
+      {
+        "name": "MAILCHIMP_API_KEY",
+        "label": "API key",
+        "help": "Profile > Extras > API keys, in the Mailchimp account that owns the audience. Carries its data center as the suffix after the last '-' (e.g. ...-us6)."
+      }
+    ],
+    "endpoint": {
+      "label": "API base URL (self-hosted test double only)",
+      "help": "Leave empty to use the account's own Mailchimp data center. Only a stand-in for the tool on the loopback, for testing, sets this."
+    },
+    "config": [
+      {
+        "name": "from_name",
+        "label": "From name",
+        "help": "Shown to recipients as who the reminder is from.",
+        "default": "Mendel Reminders"
+      },
+      {
+        "name": "reply_to",
+        "label": "Reply-to address",
+        "help": "Where a recipient's reply to a reminder goes.",
+        "default": "mendel-reminders@example.org"
+      }
+    ]
+  },
+  "claims": {
+    "probe": "supported",
+    "authorize": "declined",
+    "draft": "supported",
+    "publish": "partial",
+    "status": "supported",
+    "append_update": "declined",
+    "retract": "supported",
+    "read_back": "supported",
+    "read_metrics": "supported",
+    "set_cap": "declined",
+    "list_owned": "supported",
+    "read_series": "declined",
+    "read_total": "declined",
+    "search": "declined"
+  }
+}
