@@ -157,10 +157,15 @@ func (s *suite) revokeAtEnd(ctx context.Context, m *wp.CapabilityManifest) {
 type kindTraits struct {
 	logShaped bool // append_update applies
 	spend     bool // set_cap applies
+	// terminal: once published it cannot be recalled (a sent email, a sent
+	// message), so a wrapper need not honour retract for it, and the suite
+	// publishes it without one.
+	terminal bool
 }
 
 var seededKinds = map[string]kindTraits{
-	"social_post": {}, "listing": {}, "direct_message": {}, "email_broadcast": {},
+	"social_post": {}, "listing": {},
+	"direct_message": {terminal: true}, "email_broadcast": {terminal: true},
 }
 
 // onlyForTrait checks a verb that applies only to kinds with a trait is not
@@ -228,6 +233,51 @@ func knownKinds() map[string]payloads {
 			incomplete: map[string]any{"link": "https://mendel.build/", "media": nil},
 			lengthOf:   "text",
 		},
+		// The families below are Mendel's (internal/external/assetkinds).
+		// Every value is what JSON reads back ([]any, map[string]any), since
+		// read_back is compared field for field.
+		"listing": {
+			valid: func(max int) map[string]any {
+				return map[string]any{"name": fit("Mendel conformance "+nonce(), max), "tagline": "A check that this listing round-trips",
+					"description": "Written by Mendel's conformance suite, and removed within the minute.",
+					"media": []any{"A screenshot of the listing itself"}, "url": "https://mendel.build/?conformance=" + nonce()}
+			},
+			tooLong: func(max int) map[string]any {
+				return map[string]any{"name": strings.Repeat("x", max+1), "tagline": "Too long a name", "description": "Refused.",
+					"media": []any{}, "url": "https://mendel.build/"}
+			},
+			incomplete: map[string]any{"name": "No tagline", "description": "Missing its tagline.", "media": []any{}, "url": "https://mendel.build/"},
+			lengthOf:   "name",
+		},
+		"direct_message": {
+			// To an address at example.com, which has no mail exchanger: on
+			// a real venue the message is sent and reaches nobody.
+			valid: func(max int) map[string]any {
+				return map[string]any{"recipient": "mendel-conformance+" + nonce() + "@example.com",
+					"subject": fit("Mendel conformance check "+nonce(), max),
+					"body":    "Sent by Mendel's conformance suite to an address that receives nothing."}
+			},
+			tooLong: func(max int) map[string]any {
+				return map[string]any{"recipient": "mendel-conformance@example.com", "subject": strings.Repeat("x", max+1), "body": "Refused."}
+			},
+			incomplete: map[string]any{"recipient": "mendel-conformance@example.com", "body": "No subject."},
+			lengthOf:   "subject",
+		},
+		"email_broadcast": {
+			valid: func(max int) map[string]any {
+				link := "https://mendel.build/?conformance=" + nonce()
+				return map[string]any{"subject": fit("Mendel conformance check "+nonce(), max),
+					"preheader": "A check that this email round-trips",
+					"body": map[string]any{"html": "<p>Sent by Mendel's conformance suite.</p><p><a href=\"" + link + "\">" + link + "</a></p>",
+						"text": "Sent by Mendel's conformance suite.\n\n" + link}}
+			},
+			tooLong: func(max int) map[string]any {
+				return map[string]any{"subject": strings.Repeat("x", max+1), "preheader": "Too long a subject",
+					"body": map[string]any{"html": "<p>Refused.</p>", "text": "Refused."}}
+			},
+			incomplete: map[string]any{"subject": "No body", "preheader": "Missing its body"},
+			lengthOf:   "subject",
+		},
 	}
 }
 
@@ -254,11 +304,6 @@ func raw(v any) json.RawMessage {
 // retract: §8's venue rule, that what cannot be undone is not automated.
 func (s *suite) publishLifecycle(ctx context.Context, m *wp.CapabilityManifest) {
 	honours := func(v wp.Verb) bool { return m.Verbs[v].Level != wp.VerbDeclined }
-	if !honours(wp.VerbRetract) {
-		s.add(Check{Name: "an asset is published, read back and retracted", Verb: wp.VerbPublish, Outcome: Untested,
-			Detail: "retract is declared absent, and the suite does not publish what it cannot take back"})
-		return
-	}
 	kinds := make([]string, 0, len(m.Kinds))
 	for k := range m.Kinds {
 		kinds = append(kinds, k)
@@ -275,6 +320,19 @@ func (s *suite) publishLifecycle(ctx context.Context, m *wp.CapabilityManifest) 
 			s.add(Check{Name: "an asset is published, read back and retracted", Verb: wp.VerbPublish, Outcome: Untested,
 				Detail: fmt.Sprintf("the suite has no payloads for kind %s yet", kind)})
 			continue
+		}
+		terminal := seededKinds[kind].terminal
+		if !honours(wp.VerbRetract) && !terminal {
+			s.add(Check{Name: "an asset is published, read back and retracted", Verb: wp.VerbPublish, Outcome: Untested,
+				Detail: fmt.Sprintf("retract is declared absent, and the suite does not publish a %s it cannot take back", kind)})
+			continue
+		}
+		if terminal && !s.t.FakeVenue {
+			// A venue of the tester's own: what it sends reaches its
+			// audience, or, for one message, an address that receives
+			// nothing (example.com has no mail exchanger).
+			s.add(Check{Name: "a kind that cannot be recalled was sent on the venue", Verb: wp.VerbPublish, Outcome: Warn,
+				Detail: fmt.Sprintf("%s cannot be recalled once sent; this run sends a few to the venue's own audience or to example.com", kind)})
 		}
 		s.boundaries(ctx, kind, ks, p)
 		s.lifecycle(ctx, m, kind, p.valid(maxLength(ks.Shape, p.lengthOf)))
@@ -491,6 +549,12 @@ func (s *suite) lifecycle(ctx context.Context, m *wp.CapabilityManifest, kind st
 		s.draftLifecycle(ctx, m, kind, valid, prefix)
 	}
 
+	if !honours(wp.VerbRetract) {
+		// Only a kind that cannot be recalled gets here (publishLifecycle).
+		s.add(Check{Name: "a kind that cannot be recalled does not claim to be", Verb: wp.VerbRetract, Outcome: Pass,
+			Detail: kind + " is sent for good, and retract is declared absent"})
+		return
+	}
 	c = Check{Name: "retract takes the asset back, and is safe twice", Verb: wp.VerbRetract, Calls: 2}
 	rs, elapsed, err := s.call(ctx, wp.VerbCall{Verb: wp.VerbRetract, Ref: ref}, wp.VerbCall{Verb: wp.VerbRetract, Ref: ref})
 	c.Elapsed = elapsed

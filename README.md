@@ -36,7 +36,7 @@ with the reason.
 | `publish` | Make an asset live, from a draft or a payload | A valid asset is published; the same idempotency key is the same asset; the shape's boundaries are refused |
 | `status` | What is configured and in effect: not live, live, gone | Live after publish, gone after retract |
 | `append_update` | Append an update to a **log-shaped** asset, keeping every earlier one; never an edit | Refused for a wrapper none of whose kinds is log-shaped |
-| `retract` | Take an asset back, safely twice, never destroying history | Twice, the same outcome |
+| `retract` | Take an asset back, safely twice, never destroying history | Twice, the same outcome. A kind that cannot be recalled once sent (`email_broadcast`, `direct_message`) may decline it, and is judged without it; any other kind is not published by a wrapper that declines it |
 | `read_back` | The asset as the tool holds it, in the kind's family fields | Equal to what was approved, field for field; refused once gone |
 | `read_metrics` | An asset's metrics, a value or why there is none | Every metric the manifest lists is answered as declared |
 | `set_cap` | The most an asset may spend (a total, a daily amount or both, and always an end date), answered as the tool now holds it: `hard`, or a `target` with how far it may be exceeded | Refused for a wrapper none of whose kinds involves spend |
