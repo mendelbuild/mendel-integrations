@@ -51,6 +51,18 @@ type Target struct {
 	// wrapper's totals are held to. A venue that sent the traffic itself
 	// knows it; without it the suite can check consistency, not truth.
 	Expected map[string]float64
+	// ReadOnly says the venue is someone's real account (doc 35 §20,
+	// decision 1): nothing may be published, sent, edited while live,
+	// capped, refreshed or revoked on it. The suite then reads, makes one
+	// draft per kind it can verify is not live and takes it back, runs no
+	// boundary case (a wrapper that wrongly accepted one would post), and
+	// says in one warning which honoured verbs it did not exercise, so a
+	// read-only pass is never mistaken for a full one.
+	ReadOnly bool
+	// FakeVenue says the venue is a stand-in for the tool on the loopback,
+	// reached through Connection.Endpoint: authorize may then answer an
+	// http URL on 127.0.0.1, localhost or [::1].
+	FakeVenue bool
 }
 
 // Outcome is how one check came out.
@@ -80,6 +92,10 @@ type Report struct {
 	At       time.Time              `json:"at"`
 	Checks   []Check                `json:"checks"`
 	Manifest *wp.CapabilityManifest `json:"manifest,omitempty"`
+	// ReadOnly and FakeVenue are the Target's, recorded with what they ran
+	// against.
+	ReadOnly  bool `json:"read_only,omitempty"`
+	FakeVenue bool `json:"fake_venue,omitempty"`
 }
 
 // Passed reports whether nothing failed and nothing went untested.
@@ -110,11 +126,14 @@ type suite struct {
 	// credentials taken out and each stderr in full, for the check that no
 	// credential leaks into either.
 	seen []string
+	// notExercised is what a read-only run left alone, and why.
+	notExercised []string
 }
 
 // Run runs the suite. now fixes the windows it reads, so a run is repeatable.
 func Run(ctx context.Context, t Target, now time.Time) Report {
-	s := &suite{t: t, now: now.UTC(), report: Report{Tool: t.Description.Tool.Slug, Version: t.Description.Version, At: now.UTC()}}
+	s := &suite{t: t, now: now.UTC(), report: Report{Tool: t.Description.Tool.Slug, Version: t.Description.Version,
+		At: now.UTC(), ReadOnly: t.ReadOnly, FakeVenue: t.FakeVenue}}
 	s.contractMismatch(ctx)
 	m := s.probe(ctx)
 	if m == nil {
@@ -126,10 +145,19 @@ func Run(ctx context.Context, t Target, now time.Time) Report {
 	s.honoured(ctx, m)
 	s.revokeAtEnd(ctx, m)
 	s.credentialsStayPut()
+	if len(s.notExercised) > 0 {
+		s.add(Check{Name: "a read-only run leaves the account as it found it", Outcome: Warn,
+			Detail: "not exercised on a real account: " + strings.Join(s.notExercised, "; ")})
+	}
 	return s.report
 }
 
 func (s *suite) add(c Check) { s.report.Checks = append(s.report.Checks, c) }
+
+// skip records what a read-only run did not exercise, and why.
+func (s *suite) skip(what, why string) {
+	s.notExercised = append(s.notExercised, fmt.Sprintf("%s (%s)", what, why))
+}
 
 func (s *suite) expects(key string) bool { _, ok := s.t.Expected[key]; return ok }
 
@@ -293,13 +321,23 @@ func (s *suite) honoured(ctx context.Context, m *wp.CapabilityManifest) {
 		case wp.VerbAuthorize:
 			s.authorize(ctx, m)
 		case wp.VerbPublish:
-			s.publishLifecycle(ctx, m)
+			if s.t.ReadOnly {
+				s.readOnlyDrafts(ctx, m)
+			} else {
+				s.publishLifecycle(ctx, m)
+			}
 		case wp.VerbSearch:
 			s.search(ctx, m)
 		case wp.VerbAppendUpdate:
 			s.onlyForTrait(m, v, "log-shaped", func(t kindTraits) bool { return t.logShaped })
+			if s.t.ReadOnly {
+				s.skip(string(v), "it edits a live asset")
+			}
 		case wp.VerbSetCap:
 			s.onlyForTrait(m, v, "involves spend", func(t kindTraits) bool { return t.spend })
+			if s.t.ReadOnly {
+				s.skip(string(v), "it sets what an asset may spend")
+			}
 		default:
 			s.add(Check{Name: "an honoured verb is exercised", Verb: v, Outcome: Untested,
 				Detail: fmt.Sprintf("declared %s; the suite cannot exercise %s yet", level, v)})

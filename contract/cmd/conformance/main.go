@@ -87,6 +87,8 @@ func main() {
 	at := fs.String("at", "", "the instant the suite's windows are read back from (RFC 3339); now when empty. "+
 		"Reads cover the last complete day before it, so a venue with traffic only today is read with -at tomorrow")
 	revoke := fs.Bool("revoke", false, "run authorize's revoke at the end, which ends the venue's grant")
+	readOnly := fs.Bool("read-only", false, "the venue is someone's real account: publish, send, cap, refresh and revoke nothing")
+	fakeVenue := fs.Bool("fake-venue", false, "the venue is a stand-in for the tool on the loopback, at -endpoint")
 	expect := fs.String("expect", "", "a venue's expected.json: the totals it knows it holds, by metric/aggregation")
 	fs.Parse(os.Args[1:])
 	o.check()
@@ -106,7 +108,7 @@ func main() {
 		exitOn(json.Unmarshal(raw, &expected))
 	}
 	r := conformance.Run(context.Background(), conformance.Target{Description: d, Connection: conn,
-		Run: runner(argv(o)), Revoke: *revoke, Expected: expected}, when)
+		Run: runner(argv(o)), Revoke: *revoke, Expected: expected, ReadOnly: *readOnly, FakeVenue: *fakeVenue}, when)
 	print(r)
 	if *jsonOut != "" {
 		body, _ := json.MarshalIndent(r, "", "  ")

@@ -100,8 +100,11 @@ type Connection struct {
 	// AccountID is the tool's own handle on the account: a site, an ad
 	// account, a workspace.
 	AccountID string `json:"account_id"`
-	// Endpoint is the API's base URL when the project's instance is not the
-	// tool's hosted one (a self-hosted instance). Empty means the tool's own.
+	// Endpoint, when given, is where every request the wrapper makes to the
+	// tool goes, keeping its path, whether or not the wrapper's connection
+	// spec declares an endpoint field: a self-hosted instance, or a stand-in
+	// for the tool that a check serves on the loopback. Empty means the
+	// tool's own hosts.
 	Endpoint string `json:"endpoint,omitempty"`
 	// Config is the project's settings for the tool, per doc 35 §9: the
 	// parent hierarchy it attaches to and the like. Empty for a data source.

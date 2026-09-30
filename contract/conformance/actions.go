@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/url"
 	"reflect"
 	"sort"
@@ -48,6 +49,9 @@ func (s *suite) authorize(ctx context.Context, m *wp.CapabilityManifest) {
 	default:
 		u, perr := url.Parse(res.AuthorizeURL)
 		switch {
+		case perr == nil && s.t.FakeVenue && u.Scheme == "http" && loopback(u.Hostname()):
+			// A fake of the tool on the loopback is served over http.
+			c.Outcome, c.Detail = Pass, fmt.Sprintf("asks for %s, at the fake venue", strings.Join(a.Scopes, " "))
 		case perr != nil || u.Scheme != "https" || u.Host == "":
 			c.Outcome, c.Detail = Fail, fmt.Sprintf("%q is not an https URL a person could open", res.AuthorizeURL)
 		case !strings.Contains(res.AuthorizeURL, url.QueryEscape(state)) && !strings.Contains(res.AuthorizeURL, state):
@@ -58,7 +62,12 @@ func (s *suite) authorize(ctx context.Context, m *wp.CapabilityManifest) {
 	}
 	s.add(c)
 
-	if !steps[wp.AuthorizeRefresh] {
+	if s.t.ReadOnly {
+		// A refresh can rotate the tokens the account's connection holds,
+		// and even the check that an undeclared one is refused would do so
+		// if the wrapper wrongly performed it.
+		s.skip("authorize refresh", "it can replace the credentials the connection holds")
+	} else if !steps[wp.AuthorizeRefresh] {
 		c := Check{Name: "a refresh not declared is refused", Verb: wp.VerbAuthorize, Calls: 1}
 		res, elapsed, err := s.one(ctx, wp.VerbCall{Verb: wp.VerbAuthorize, Step: wp.AuthorizeRefresh})
 		c.Elapsed = elapsed
@@ -113,6 +122,9 @@ func (s *suite) revokeAtEnd(ctx context.Context, m *wp.CapabilityManifest) {
 	switch {
 	case !declared:
 		c.Outcome, c.Detail = Warn, "revoke is not declared, so disconnecting cannot end the grant at the tool"
+	case s.t.ReadOnly:
+		s.skip("authorize revoke", "it ends the account's grant")
+		return
 	case !s.t.Revoke:
 		c.Outcome, c.Detail = Warn, "not run: it ends the venue's grant (run with -revoke to exercise it)"
 	default:
@@ -267,6 +279,88 @@ func (s *suite) publishLifecycle(ctx context.Context, m *wp.CapabilityManifest) 
 		s.boundaries(ctx, kind, ks, p)
 		s.lifecycle(ctx, m, kind, p.valid(maxLength(ks.Shape, p.lengthOf)))
 	}
+}
+
+// readOnlyDrafts is the action surface on someone's real account: for each
+// kind the suite has a payload for, one draft, checked not live and taken
+// back. Drafting runs without a person's approval (doc 35 §20, decision 1),
+// and a draft is exactly what shows whether a wrapper's draft is really one
+// before anything of the project's own is drafted through it. A kind is
+// drafted only where status can say it is not live and retract can take it
+// back; everything else the lifecycle would do is named as not exercised.
+func (s *suite) readOnlyDrafts(ctx context.Context, m *wp.CapabilityManifest) {
+	honours := func(v wp.Verb) bool { return m.Verbs[v].Level != wp.VerbDeclined }
+	for _, v := range []wp.Verb{wp.VerbPublish, wp.VerbReadBack, wp.VerbReadMetrics, wp.VerbListOwned} {
+		if honours(v) {
+			s.skip(string(v), "it needs a published asset, and nothing is published on a real account")
+		}
+	}
+	switch {
+	case !honours(wp.VerbDraft):
+		return
+	case !honours(wp.VerbStatus) || !honours(wp.VerbRetract):
+		s.skip("draft", "without status and retract the suite could not show a draft is not live, or take it back")
+		return
+	}
+	kinds := make([]string, 0, len(m.Kinds))
+	for k := range m.Kinds {
+		kinds = append(kinds, k)
+	}
+	sort.Strings(kinds)
+	known := knownKinds()
+	for _, kind := range kinds {
+		ks := m.Kinds[kind]
+		if ks.Level == wp.VerbDeclined {
+			continue
+		}
+		p, ok := known[kind]
+		if !ok {
+			s.skip("draft of "+kind, "the suite has no payload for it yet")
+			continue
+		}
+		s.readOnlyDraft(ctx, kind, p.valid(maxLength(ks.Shape, p.lengthOf)))
+	}
+}
+
+func (s *suite) readOnlyDraft(ctx context.Context, kind string, valid map[string]any) {
+	c := Check{Name: "on a real account, a draft is not live and is taken back", Verb: wp.VerbDraft, Calls: 1}
+	res, elapsed, err := s.one(ctx, wp.VerbCall{Verb: wp.VerbDraft, AssetKind: kind, Payload: raw(valid),
+		Name: "mendel-conformance-" + nonce() + "-draft"})
+	c.Elapsed = elapsed
+	switch {
+	case err != nil:
+		c.Outcome, c.Detail = Fail, err.Error()
+	case !res.Succeeded() || res.Ref == "":
+		c.Outcome, c.Detail = Fail, "draft made no asset: "+res.Why()
+	}
+	if c.Outcome == Fail {
+		s.add(c)
+		return
+	}
+	c.Calls += 2
+	st, _, err := s.one(ctx, wp.VerbCall{Verb: wp.VerbStatus, Ref: res.Ref})
+	// Taken back before anything is judged, and whatever status said: a
+	// draft that is live is on someone's account now.
+	back, _, rerr := s.one(ctx, wp.VerbCall{Verb: wp.VerbRetract, Ref: res.Ref})
+	switch {
+	case err != nil || st.Status == nil || st.Status.Effective != wp.EffectiveNotLive:
+		c.Outcome, c.Detail = Fail, fmt.Sprintf("a draft's status is %+v on a real account, and it was retracted at once; "+
+			"a draft is not live. What draft is for: %s", st.Status, wp.VerbDraft.Purpose())
+	case rerr != nil || !back.Succeeded():
+		c.Outcome, c.Detail = Fail, fmt.Sprintf("the draft %s could not be taken back: %s", res.Ref, back.Why())
+	default:
+		c.Outcome, c.Detail = Pass, kind
+	}
+	s.add(c)
+}
+
+// loopback reports whether a host is this machine's own.
+func loopback(host string) bool {
+	if host == "localhost" {
+		return true
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
 }
 
 // boundaries checks that what the shape does not allow is refused, and posts

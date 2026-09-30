@@ -70,8 +70,20 @@ by the check about that rule (doc 35 §8).
 
 ```bash
 go run ./contract/cmd/conformance -file <tool>/wrapper.json \
-    (-image <image> | -cmd <built binary>) -account <venue account> [-endpoint URL] [-at RFC3339] [-json out.json]
+    (-image <image> | -cmd <built binary>) -account <venue account> [-endpoint URL] [-at RFC3339] [-json out.json] \
+    [-read-only] [-fake-venue]
 ```
+
+Two flags say what the venue is. `-read-only` is for someone's real account:
+the suite publishes, sends, caps, refreshes and revokes nothing and runs no
+boundary case (a wrapper that wrongly accepted one would post). It reads,
+and for each kind makes one draft, which it shows is not live through
+`status` and takes back with `retract` (or leaves undrafted where either is
+declined). One warning names every honoured verb it left alone, and the
+report records `read_only`, so a read-only pass is never read as a full one.
+`-fake-venue` is for a stand-in for the tool on the loopback at `-endpoint`:
+everything is judged as usual, and `authorize` may answer an http URL on
+127.0.0.1, localhost or [::1].
 
 Credentials come from the shell's environment under the names `wrapper.json`
 gives them. `venues/` holds local venues for tools that can run on this
@@ -97,7 +109,7 @@ the request body, so it never appears on a command line.
 
 ```json
 {
-  "contract": "1",
+  "contract": "2",
   "connection": {
     "credentials": {"PLAUSIBLE_API_KEY": "..."},
     "account_id": "pong.example.com",
@@ -116,7 +128,10 @@ the request body, so it never appears on a command line.
 - `contract` is the protocol version. A wrapper written against another one
   answers its first call `failed` and stops.
 - `connection` is the project's account, injected for this run only. A
-  wrapper never stores it.
+  wrapper never stores it. **When `endpoint` is given, every request the
+  wrapper makes to the tool goes to it**, keeping its path, whether or not
+  `wrapper.json` declares an endpoint field: a self-hosted instance and a
+  stand-in for the tool on the loopback are reached the same way.
 - `calls` is a **list**, answered in order, so a day's reads for every measure
   a project has cost one container start (§8 "Invocation cost").
 

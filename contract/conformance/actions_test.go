@@ -36,6 +36,9 @@ type publisher struct {
 
 	names       map[string]string
 	draftsHeld map[string]json.RawMessage
+
+	loopbackURL bool           // begin answers an http URL on the loopback, as a fake venue does
+	calls       map[string]int // every call made, by verb and step
 }
 
 func (p *publisher) manifest() *wp.CapabilityManifest {
@@ -83,6 +86,9 @@ func (p *publisher) run(_ context.Context, req wp.WrapperRequest) (wp.WrapperRes
 		return out, "", nil
 	}
 	for _, c := range req.Calls {
+		if p.calls != nil {
+			p.calls[string(c.Verb)+" "+c.Step]++
+		}
 		r := p.answer(req.Connection, c)
 		out.Results = append(out.Results, r)
 		if !r.Succeeded() {
@@ -111,6 +117,9 @@ func (p *publisher) answer(conn wp.Connection, c wp.VerbCall) wp.VerbResult {
 		switch c.Step {
 		case wp.AuthorizeBegin:
 			r.AuthorizeURL = "https://pub.example/oauth?client_id=" + conn.Credentials["PUB_CLIENT"] + "&state=" + c.State
+			if p.loopbackURL {
+				r.AuthorizeURL = "http://127.0.0.1:8123/oauth?state=" + c.State
+			}
 			if p.stateless {
 				r.AuthorizeURL = "https://pub.example/oauth"
 			}
@@ -211,7 +220,9 @@ func (p *publisher) answer(conn wp.Connection, c wp.VerbCall) wp.VerbResult {
 	return r
 }
 
-func runPublisher(p *publisher) Report {
+func runPublisher(p *publisher) Report { return runPublisherAs(p, func(*Target) {}) }
+
+func runPublisherAs(p *publisher, as func(*Target)) Report {
 	p.posts, p.byKey, p.names, p.draftsHeld = map[string]json.RawMessage{}, map[string]string{}, map[string]string{},
 		map[string]json.RawMessage{}
 	d := wp.Description{Tool: wp.Tool{Slug: "pub", Name: "Pub"}, Version: "1.0", Contract: wp.ContractVersion,
@@ -220,9 +231,11 @@ func runPublisher(p *publisher) Report {
 			Credentials: []wp.Field{{Name: "PUB_TOKEN", Label: "Token"}}},
 		Claims: map[string]string{"authorize": "supported", "publish": "supported", "retract": "supported"}}
 	d.Connection.Credentials = append(d.Connection.Credentials, wp.Field{Name: "PUB_CLIENT", Label: "Client", Public: true})
-	return Run(context.Background(), Target{Description: d, Run: p.run,
+	t := Target{Description: d, Run: p.run,
 		Connection: wp.Connection{AccountID: "pub.example", Credentials: map[string]string{
-			"PUB_TOKEN": "pub-token-SECRET", "PUB_CLIENT": "pub-client-ID"}}}, now)
+			"PUB_TOKEN": "pub-token-SECRET", "PUB_CLIENT": "pub-client-ID"}}}
+	as(&t)
+	return Run(context.Background(), t, now)
 }
 
 func TestAPublisherThatKeepsTheDraftPassesAndLeavesNothingBehind(t *testing.T) {
