@@ -69,10 +69,14 @@ are mutants of a small wrapper that each break one rule and must each be caught
 by the check about that rule (doc 35 §8).
 
 ```bash
-go run ./contract/cmd/conformance -file <tool>/wrapper.json \
+go -C contract build -o /tmp/conformance ./cmd/conformance
+/tmp/conformance -file <tool>/wrapper.json \
     (-image <image> | -cmd <built binary>) -account <venue account> [-endpoint URL] [-at RFC3339] [-json out.json] \
     [-read-only] [-fake-venue]
 ```
+
+With `-image`, the wrapper runs in a container, so a venue on this machine is
+`-endpoint http://host.docker.internal:<port>`, not `localhost`.
 
 Two flags say what the venue is. `-read-only` is for someone's real account:
 the suite publishes, sends, caps, refreshes and revokes nothing and runs no
