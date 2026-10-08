@@ -1,0 +1,39 @@
+{
+  "tool": {
+    "slug": "mailgun",
+    "name": "Mailgun",
+    "homepage": "https://www.mailgun.com",
+    "categories": ["send email"]
+  },
+  "version": "0.1.0",
+  "contract": "2",
+  "image": "mendel-tool-mailgun:dev",
+  "command": ["/mailgun"],
+  "spec_source": "https://documentation.mailgun.com/docs/mailgun/api-reference/send/mailgun/messages",
+  "connection": {
+    "account": {
+      "label": "Sending domain",
+      "help": "The domain in your Mailgun account that messages are sent from, as Mailgun names it (e.g. mg.example.com).",
+      "placeholder": "mg.example.com"
+    },
+    "credentials": [
+      {"name": "MAILGUN_API_KEY", "label": "API key", "help": "A Mailgun API key that may send for the domain."}
+    ],
+    "endpoint": {
+      "label": "Endpoint (EU region or self-hosted only)",
+      "help": "Leave empty for Mailgun's US API (https://api.mailgun.net). For the EU region use https://api.eu.mailgun.net.",
+      "placeholder": "https://api.eu.mailgun.net"
+    },
+    "config": [
+      {"name": "from", "label": "From address",
+       "help": "The address messages are sent from, with an optional name, on the sending domain.",
+       "default": "postmaster@<sending domain>"},
+      {"name": "reply_to", "label": "Reply-To address",
+       "help": "Where a family's reply goes. Unset, replies go to the From address."}
+    ]
+  },
+  "claims": {
+    "probe": "supported",
+    "publish": "supported"
+  }
+}
