@@ -1,0 +1,39 @@
+{
+  "tool": {
+    "slug": "resend",
+    "name": "Resend",
+    "homepage": "https://resend.com",
+    "categories": ["send email"]
+  },
+  "version": "0.1.0",
+  "contract": "2",
+  "image": "mendel-tool-resend:dev",
+  "command": ["/resend"],
+  "spec_source": "https://resend.com/docs/api-reference/emails",
+  "connection": {
+    "account": {
+      "label": "Sending domain or from address",
+      "help": "A domain verified at Resend (messages are sent from hello@ that domain) or a full from address on one, such as Acme <hello@acme.example>."
+    },
+    "credentials": [
+      {"name": "RESEND_API_KEY", "label": "API key", "help": "A Resend API key with full access: it sends, and reads the sent emails."}
+    ],
+    "endpoint": {"label": "Endpoint (only to reach a stand-in for Resend)"}
+  },
+  "claims": {
+    "probe": "supported",
+    "authorize": "declined",
+    "draft": "declined",
+    "publish": "partial",
+    "status": "supported",
+    "append_update": "declined",
+    "retract": "declined",
+    "read_back": "supported",
+    "read_metrics": "partial",
+    "set_cap": "declined",
+    "list_owned": "partial",
+    "read_series": "declined",
+    "read_total": "declined",
+    "search": "declined"
+  }
+}
