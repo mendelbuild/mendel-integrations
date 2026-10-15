@@ -1,0 +1,39 @@
+{
+  "tool": {
+    "slug": "ayrshare",
+    "name": "Ayrshare",
+    "homepage": "https://www.ayrshare.com",
+    "categories": ["publish to communities"]
+  },
+  "version": "0.1.0",
+  "contract": "2",
+  "image": "mendel-tool-ayrshare:dev",
+  "command": ["/ayrshare"],
+  "spec_source": "https://docs.ayrshare.com/rest-api/endpoints/post",
+  "connection": {
+    "account": {
+      "label": "Ayrshare account",
+      "help": "A name for this account, for display. Ayrshare knows the account by its API key."
+    },
+    "credentials": [
+      {"name": "AYRSHARE_API_KEY", "label": "API key", "help": "From the Ayrshare dashboard."}
+    ],
+    "endpoint": {"label": "Endpoint (a stand-in for Ayrshare only)"},
+    "config": [
+      {
+        "name": "subreddit",
+        "label": "Subreddit",
+        "help": "The community posts go to, such as Parenting or PersonalFinance. Sent as Reddit's own options with each post."
+      }
+    ]
+  },
+  "claims": {
+    "probe": "supported",
+    "draft": "supported",
+    "publish": "partial",
+    "status": "supported",
+    "retract": "supported",
+    "read_back": "supported",
+    "list_owned": "partial"
+  }
+}
