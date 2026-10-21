@@ -1,0 +1,36 @@
+{
+  "tool": {
+    "slug": "gmail-api",
+    "name": "Gmail API",
+    "homepage": "https://developers.google.com/workspace/gmail/api",
+    "categories": ["send a message"]
+  },
+  "version": "0.1.0",
+  "contract": "2",
+  "image": "mendel-tool-gmail-api:dev",
+  "command": ["/gmail-api"],
+  "spec_source": "https://developers.google.com/workspace/gmail/api/reference/rest",
+  "connection": {
+    "account": {
+      "label": "Gmail address",
+      "help": "The address of the owner's own account, which the message is sent from."
+    },
+    "credentials": [
+      {
+        "name": "GMAIL_API_ACCESS_TOKEN",
+        "label": "OAuth 2.0 access token",
+        "help": "An access token for the account that allows composing and sending mail, as Google issues it."
+      }
+    ],
+    "endpoint": {
+      "label": "Endpoint (a stand-in for Gmail API only)",
+      "help": "Leave empty to use https://gmail.googleapis.com."
+    }
+  },
+  "claims": {
+    "probe": "supported",
+    "draft": "supported",
+    "publish": "partial",
+    "read_back": "supported"
+  }
+}
